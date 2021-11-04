@@ -31,4 +31,6 @@ except KeyboardInterrupt:
 
 ## Roadmap to the stable release
 
-🌚
+- [ ] More documentation, both internal and user.
+- [ ] Integration tests with ASP hello-world.
+- [ ] Ensure that authentication works.
