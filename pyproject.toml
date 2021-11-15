@@ -22,7 +22,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-websockets = "^10.0"
+websockets = "10.1"
 aiohttp = "^3.7.4"
 msgpack = "^1.0.2"
 

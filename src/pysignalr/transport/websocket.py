@@ -1,8 +1,6 @@
 import asyncio
 import logging
-from concurrent.futures import CancelledError
 from contextlib import suppress
-from functools import wraps
 from typing import Awaitable
 from typing import Callable
 from typing import Dict
@@ -14,10 +12,9 @@ from aiohttp import ClientTimeout
 from websockets.client import WebSocketClientProtocol
 from websockets.client import connect
 from websockets.exceptions import ConnectionClosed
-from websockets.exceptions import InvalidStatusCode
-from websockets.legacy.client import Connect
 from websockets.legacy.protocol import State
 
+from pysignalr import NegotiationTimeout
 from pysignalr.exceptions import AuthorizationError
 from pysignalr.exceptions import HubError
 from pysignalr.messages import CompletionMessage
@@ -35,24 +32,6 @@ DEFAULT_PING_INTERVAL = 10
 DEFAULT_CONNECTION_TIMEOUT = 10
 
 _logger = logging.getLogger('pysignalr.transport')
-
-
-class NegotiationTimeout(CancelledError):
-    pass
-
-
-def _patch_negotiation_timeout(fn):
-    @wraps(fn)
-    async def wrapper(self, *args, **kwargs):
-        try:
-            return await fn(self, *args, **kwargs)
-        except InvalidStatusCode as e:
-            raise NegotiationTimeout from e
-
-    return wrapper
-
-# NOTE: Patch websockets library to treat invalid status code from negotiaion URL like fatal error
-Connect.__aenter__ = _patch_negotiation_timeout(Connect.__aenter__)  # type: ignore
 
 
 class WebsocketTransport(Transport):

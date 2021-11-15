@@ -26,7 +26,9 @@ from pysignalr.messages import StreamItemMessage
 from pysignalr.protocol.abstract import Protocol
 from pysignalr.protocol.json import JSONProtocol
 from pysignalr.transport.abstract import Transport
-from pysignalr.transport.websocket import DEFAULT_CONNECTION_TIMEOUT, DEFAULT_PING_INTERVAL, WebsocketTransport
+from pysignalr.transport.websocket import DEFAULT_CONNECTION_TIMEOUT
+from pysignalr.transport.websocket import DEFAULT_PING_INTERVAL
+from pysignalr.transport.websocket import WebsocketTransport
 
 
 class ClientStream:
