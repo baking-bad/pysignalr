@@ -169,12 +169,12 @@ class SignalRClient:
 
     async def _on_completion_message(self, message: CompletionMessage) -> None:
         if message.error:
-            if not self._error_callback:
-                raise Exception
+            if self._error_callback is None:
+                raise RuntimeError('Error callback is not set')
             await self._error_callback(message)
 
         callback = self._invocation_handlers.pop(message.invocation_id)
-        if callback:
+        if callback is not None:
             await callback(message)
 
     async def _on_stream_item_message(self, message: StreamItemMessage) -> None:

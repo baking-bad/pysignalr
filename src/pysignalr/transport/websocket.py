@@ -95,7 +95,7 @@ class WebsocketTransport(Transport):
             extra_headers=self._headers,
             ping_interval=self._ping_interval,
             open_timeout=self._connection_timeout,
-            logger=logging.getLogger('pysignalr.transport'),
+            logger=_logger,
         )
 
         async for conn in connection_loop:
@@ -115,16 +115,15 @@ class WebsocketTransport(Transport):
     async def _set_state(self, state: ConnectionState) -> None:
         _logger.info('State change: %s -> %s', self._state.name, state.name)
 
-        # FIXME: Exceptions
         if state == ConnectionState.connecting:
             if self._state != ConnectionState.disconnected:
-                raise Exception
+                raise RuntimeError('Cannot connect while not disconnected')
 
             self._connected.clear()
 
         elif state == ConnectionState.connected:
             if self._state not in (ConnectionState.connecting, ConnectionState.reconnecting):
-                raise Exception
+                raise RuntimeError('Cannot connect while not connecting or reconnecting')
 
             self._connected.set()
 
@@ -145,7 +144,7 @@ class WebsocketTransport(Transport):
     async def _get_connection(self) -> WebSocketClientProtocol:
         await self._connected.wait()
         if not self._ws or self._ws.state != State.OPEN:
-            raise RuntimeError
+            raise RuntimeError('Connection is closed')
         return self._ws
 
     async def _process(self, conn: WebSocketClientProtocol) -> None:
