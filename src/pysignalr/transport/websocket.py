@@ -9,7 +9,7 @@ from typing import Union
 
 from aiohttp import ClientSession
 from aiohttp import ClientTimeout
-from aiohttp import ServerTimeoutError
+from aiohttp import ServerConnectionError
 from websockets.client import WebSocketClientProtocol
 from websockets.client import connect
 from websockets.exceptions import ConnectionClosed
@@ -86,7 +86,7 @@ class WebsocketTransport(Transport):
         if not self._skip_negotiation:
             try:
                 await self._negotiate()
-            except ServerTimeoutError as e:
+            except ServerConnectionError as e:
                 raise NegotiationTimeout from e
 
         connection_loop = connect(
