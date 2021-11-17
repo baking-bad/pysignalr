@@ -108,7 +108,8 @@ class WebsocketTransport(Transport):
                     self._keepalive(conn),
                 )
 
-            except ConnectionClosed:
+            except ConnectionClosed as e:
+                _logger.warning('Connection closed: %s', e)
                 self._ws = None
                 await self._set_state(ConnectionState.reconnecting)
 
