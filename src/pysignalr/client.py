@@ -104,7 +104,7 @@ class SignalRClient:
         self,
         method: str,
         arguments: List[Dict[str, Any]],
-        on_invocation: Optional[Callable[[], Awaitable[None]]] = None,
+        on_invocation: Optional[Callable[[CompletionMessage], Awaitable[None]]] = None,
     ) -> None:
         """Send a message to the server"""
         invocation_id = str(uuid.uuid4())
