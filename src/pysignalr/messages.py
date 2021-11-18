@@ -185,8 +185,8 @@ class CompletionClientStreamMessage(Message, type_=MessageType.stream_item):
 @dataclass
 class CompletionMessage(Message, type_=MessageType.completion):
     invocation_id: str
-    result: Any
-    error: Optional[str]
+    result: Optional[Any] = None
+    error: Optional[str] = None
     headers: Optional[Dict[str, Any]] = None
 
 
