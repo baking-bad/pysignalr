@@ -1,13 +1,3 @@
-# pysignalr
-[![Pypi](https://img.shields.io/pypi/v/pysignalr.svg)](https://pypi.org/project/pysignalr/)
-
-**pysignalr** is a modern, reliable and async-ready client for [SignalR protocol](https://docs.microsoft.com/en-us/aspnet/core/signalr/introduction?view=aspnetcore-5.0). This project started as an asyncio fork of mandrewcito's [signalrcore](https://github.com/mandrewcito/signalrcore) library.
-
-## Usage
-
-Let's connect to [TzKT](https://tzkt.io/), indexer and explorer of Tezos blockchain, and subscribe to all operations:
-
-```python
 import asyncio
 from contextlib import suppress
 from typing import Any, Dict, List
@@ -47,10 +37,3 @@ async def main():
 
 with suppress(KeyboardInterrupt, asyncio.CancelledError):
     asyncio.run(main())
-```
-
-## Roadmap to the stable release
-
-- [ ] More documentation, both internal and user.
-- [ ] Integration tests with containerized ASP hello-world server.
-- [ ] Ensure that authentication works correctly.
