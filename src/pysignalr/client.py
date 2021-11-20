@@ -27,6 +27,7 @@ from pysignalr.protocol.abstract import Protocol
 from pysignalr.protocol.json import JSONProtocol
 from pysignalr.transport.abstract import Transport
 from pysignalr.transport.websocket import DEFAULT_CONNECTION_TIMEOUT
+from pysignalr.transport.websocket import DEFAULT_MAX_SIZE
 from pysignalr.transport.websocket import DEFAULT_PING_INTERVAL
 from pysignalr.transport.websocket import WebsocketTransport
 
@@ -62,6 +63,7 @@ class SignalRClient:
         headers: Optional[Dict[str, str]] = None,
         ping_interval: int = DEFAULT_PING_INTERVAL,
         connection_timeout: int = DEFAULT_CONNECTION_TIMEOUT,
+        max_size: int = DEFAULT_MAX_SIZE,
     ) -> None:
         self._url = url
         self._protocol = protocol or JSONProtocol()
@@ -78,6 +80,7 @@ class SignalRClient:
             headers=self._headers,
             ping_interval=ping_interval,
             connection_timeout=connection_timeout,
+            max_size=max_size,
         )
         self._error_callback: Optional[Callable[[CompletionMessage], Awaitable[None]]] = None
 
