@@ -201,7 +201,7 @@ class WebsocketTransport(Transport):
             self._url = replace_scheme(url, ws=True)
             self._headers['Authorization'] = f'Bearer {access_token}'
         else:
-            raise exceptions.ServerError(data.get('error'))
+            raise exceptions.ServerError(str(data))
 
     async def _on_raw_message(self, raw_message: Union[str, bytes]) -> None:
         for message in self._protocol.decode(raw_message):
