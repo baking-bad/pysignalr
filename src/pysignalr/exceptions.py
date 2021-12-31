@@ -1,18 +1,22 @@
+from dataclasses import dataclass
+from typing import Optional
+
+
+@dataclass(frozen=True)
 class HubError(Exception):
-    pass
+    ...
 
 
+@dataclass(frozen=True)
 class AuthorizationError(HubError):
     pass
 
 
+@dataclass(frozen=True)
 class ConnectionError(HubError):
-    """Hub connection error"""
-
-    pass
+    status: int
 
 
+@dataclass(frozen=True)
 class ServerError(HubError):
-    """Hub server error"""
-
-    pass
+    message: Optional[str]

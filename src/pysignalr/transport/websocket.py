@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from contextlib import suppress
+from http import HTTPStatus
 from typing import Awaitable
 from typing import Callable
 from typing import Dict
@@ -15,9 +16,8 @@ from websockets.client import connect
 from websockets.exceptions import ConnectionClosed
 from websockets.legacy.protocol import State
 
+import pysignalr.exceptions as exceptions
 from pysignalr import NegotiationTimeout
-from pysignalr.exceptions import AuthorizationError
-from pysignalr.exceptions import HubError
 from pysignalr.messages import CompletionMessage
 from pysignalr.messages import Message
 from pysignalr.messages import PingMessage
@@ -182,12 +182,12 @@ class WebsocketTransport(Transport):
         )
         async with session:
             async with session.post(negotiate_url, headers=self._headers) as response:
-                if response.status == 200:
+                if response.status == HTTPStatus.OK:
                     data = await response.json()
-                elif response.status == 401:
-                    raise AuthorizationError
+                elif response.status == HTTPStatus.UNAUTHORIZED:
+                    raise exceptions.AuthorizationError
                 else:
-                    raise HubError(response.status)
+                    raise exceptions.ConnectionError(response.status)
 
         connection_id = data.get('connectionId')
         url = data.get('url')
@@ -201,7 +201,7 @@ class WebsocketTransport(Transport):
             self._url = replace_scheme(url, ws=True)
             self._headers['Authorization'] = f'Bearer {access_token}'
         else:
-            raise HubError('Invalid response from `negotiate` endpoint', data)
+            raise exceptions.ServerError(data.get('error'))
 
     async def _on_raw_message(self, raw_message: Union[str, bytes]) -> None:
         for message in self._protocol.decode(raw_message):

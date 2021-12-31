@@ -138,8 +138,9 @@ class SignalRClient:
         await stream.complete()
 
     async def _on_message(self, message: Message) -> None:
+        # TODO: https://github.com/aspnet/SignalR/blob/master/clients/java/signalr/src/main/java/com/microsoft/signalr/InvocationBindingFailureMessage.java
         if message.type == MessageType.invocation_binding_failure:  # type: ignore
-            raise ServerError(message)
+            raise ServerError(str(message))
 
         elif isinstance(message, PingMessage):
             pass
