@@ -28,7 +28,7 @@ from pysignalr.utils import get_connection_url
 from pysignalr.utils import get_negotiate_url
 from pysignalr.utils import replace_scheme
 
-DEFAULT_MAX_SIZE = 2 ** 20  # 1 MB
+DEFAULT_MAX_SIZE = 2**20  # 1 MB
 DEFAULT_PING_INTERVAL = 10
 DEFAULT_CONNECTION_TIMEOUT = 10
 
@@ -45,7 +45,7 @@ class WebsocketTransport(Transport):
         skip_negotiation: bool = False,
         ping_interval: int = DEFAULT_PING_INTERVAL,
         connection_timeout: int = DEFAULT_CONNECTION_TIMEOUT,
-        max_size: int = DEFAULT_MAX_SIZE,
+        max_size: Optional[int] = DEFAULT_MAX_SIZE,
     ):
         super().__init__()
         self._url = url
@@ -116,6 +116,9 @@ class WebsocketTransport(Transport):
                 await self._set_state(ConnectionState.reconnecting)
 
     async def _set_state(self, state: ConnectionState) -> None:
+        if state == self._state:
+            return
+
         _logger.info('State change: %s -> %s', self._state.name, state.name)
 
         if state == ConnectionState.connecting:

@@ -63,7 +63,7 @@ class SignalRClient:
         headers: Optional[Dict[str, str]] = None,
         ping_interval: int = DEFAULT_PING_INTERVAL,
         connection_timeout: int = DEFAULT_CONNECTION_TIMEOUT,
-        max_size: int = DEFAULT_MAX_SIZE,
+        max_size: Optional[int] = DEFAULT_MAX_SIZE,
     ) -> None:
         self._url = url
         self._protocol = protocol or JSONProtocol()
