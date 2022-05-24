@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.1 - 2022-05-24
+## 0.1.2 - 2022-05-24
 
 ### Improved
 
@@ -13,6 +13,12 @@
 ### Other
 
 * `websockets` library updated to `10.3`
+
+## 0.1.1 - 2022-01-06
+
+### Fixed
+
+* Fixed exceptions raised on server error
 
 ## 0.1.0 - 2021-11-22
 
