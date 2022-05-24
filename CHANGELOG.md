@@ -2,9 +2,13 @@
 
 ## [unreleased]
 
-### Fixed
+### Improved
 
 * Now `max_size` argument can be None to disable message size limit. 
+
+### Fixed
+
+* Fixed crash with `Cannot connect while not disconnected`.
 
 ### Other
 

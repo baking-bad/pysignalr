@@ -116,6 +116,9 @@ class WebsocketTransport(Transport):
                 await self._set_state(ConnectionState.reconnecting)
 
     async def _set_state(self, state: ConnectionState) -> None:
+        if state == self._state:
+            return
+
         _logger.info('State change: %s -> %s', self._state.name, state.name)
 
         if state == ConnectionState.connecting:
