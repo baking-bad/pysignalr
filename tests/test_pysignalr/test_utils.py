@@ -28,4 +28,6 @@ class UtilsTest(TestCase):
 
     def test_get_connection_url(self) -> None:
         url = 'http://localhost:8080/v1/events?foo=bar'
-        self.assertEqual('ws://localhost:8080/v1/events?foo=bar&id=1&id=2&id=3', get_connection_url(url, ['1', '2', '3']))
+        self.assertEqual(
+            'ws://localhost:8080/v1/events?foo=bar&id=1&id=2&id=3', get_connection_url(url, ['1', '2', '3'])
+        )

@@ -1,24 +1,35 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed client streaming methods.
+
+### Other
+
+- `websockets` library updated to 10.4.
+- Enable `--strict` flag for mypy.
+
 ## 0.1.2 - 2022-05-24
 
 ### Improved
 
-* Now `max_size` argument can be None to disable message size limit. 
+- Now `max_size` argument can be None to disable message size limit. 
 
 ### Fixed
 
-* Fixed crash with `Cannot connect while not disconnected`.
+- Fixed crash with "Cannot connect while not disconnected".
 
 ### Other
 
-* `websockets` library updated to `10.3`
+- `websockets` library updated to 10.3.
 
 ## 0.1.1 - 2022-01-06
 
 ### Fixed
 
-* Fixed exceptions raised on server error
+- Fixed exceptions raised on server error.
 
 ## 0.1.0 - 2021-11-22
 

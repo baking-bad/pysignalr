@@ -15,7 +15,9 @@ class NegotiationTimeout(Exception):
     pass
 
 
-async def __aiter__(self) -> AsyncIterator[websockets.legacy.client.WebSocketClientProtocol]:
+async def __aiter__(
+    self: websockets.legacy.client.Connect,
+) -> AsyncIterator[websockets.legacy.client.WebSocketClientProtocol]:
     backoff_delay = self.BACKOFF_MIN
     while True:
         try:
