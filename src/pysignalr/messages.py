@@ -40,8 +40,7 @@ class MessageType(IntEnum):
 @dataclass
 class Message:
     def __init_subclass__(cls, type_: MessageType) -> None:
-        # FIXME: https://github.com/samuelcolvin/pydantic/issues/288
-        cls.type = type_  # type: ignore
+        cls.type = type_  # type: ignore[attr-defined]
 
     def dump(self) -> Dict[str, Any]:
         data = self.__dict__
@@ -49,8 +48,7 @@ class Message:
         invocation_id = data.pop('invocation_id', None)
         stream_ids = data.pop('stream_ids', None)
 
-        # FIXME: https://github.com/samuelcolvin/pydantic/issues/288
-        data['type'] = self.type  # type: ignore
+        data['type'] = self.type  # type: ignore[attr-defined]
         if invocation_id is not None:
             data['invocationId'] = invocation_id
         if stream_ids is not None:
