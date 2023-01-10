@@ -24,6 +24,7 @@ async def __aiter__(
             async with self as protocol:
                 yield protocol
 
+        # NOTE: The following block was added to the original code to handle expired connection URLs.
         except InvalidStatusCode as e:
             if e.status_code == HTTPStatus.NOT_FOUND:
                 raise NegotiationTimeout from e
@@ -57,4 +58,4 @@ async def __aiter__(
             backoff_delay = self.BACKOFF_MIN
 
 
-websockets.legacy.client.Connect.__aiter__ = __aiter__  # type: ignore
+websockets.legacy.client.Connect.__aiter__ = __aiter__  # type: ignore[assignment]

@@ -27,16 +27,16 @@ test:           ## Run test suite
 ##
 
 isort:          ## Format with isort
-	poetry run isort src tests
+	poetry run isort src tests example.py
 
 black:           ## Format with black
-	poetry run black src tests
+	poetry run black src tests example.py
 
 flake:          ## Lint with flake8
-	poetry run flakeheaven lint src tests
+	poetry run flakeheaven lint src tests example.py
 
 mypy:           ## Lint with mypy
-	poetry run mypy --strict src tests
+	poetry run mypy --strict src tests example.py
 
 cover:          ## Print coverage for the current branch
 	poetry run diff-cover --compare-branch `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'` coverage.xml

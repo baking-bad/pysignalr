@@ -10,7 +10,7 @@ from typing import Tuple
 from typing import Union
 from typing import cast
 
-import msgpack  # type: ignore
+import msgpack  # type: ignore[import]
 
 from pysignalr.messages import CancelInvocationMessage
 from pysignalr.messages import CloseMessage
