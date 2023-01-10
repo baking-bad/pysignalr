@@ -1,11 +1,21 @@
 # pysignalr
-[![Pypi](https://img.shields.io/pypi/v/pysignalr.svg)](https://pypi.org/project/pysignalr/)
 
-**pysignalr** is a modern, reliable and async-ready client for [SignalR protocol](https://docs.microsoft.com/en-us/aspnet/core/signalr/introduction?view=aspnetcore-5.0). This project started as an asyncio fork of mandrewcito's [signalrcore](https://github.com/mandrewcito/signalrcore) library.
+[![GitHub stars](https://img.shields.io/github/stars/baking-bad/pysignalr?color=2c2c2c)](https://github.com/baking-bad/pysignalr)
+[![Latest stable release](https://img.shields.io/github/v/release/baking-bad/pysignalr?label=stable%20release&color=2c2c2c)](https://github.com/baking-bad/pysignalr/releases)
+[![Latest pre-release)](https://img.shields.io/github/v/release/baking-bad/pysignalr?include_prereleases&label=latest%20release&color=2c2c2c)](https://github.com/baking-bad/pysignalr/releases)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pysignalr?color=2c2c2c)](https://www.python.org)
+[![License: MIT](https://img.shields.io/github/license/baking-bad/pysignalr?color=2c2c2c)](https://github.com/baking-bad/pysignalr/blob/master/LICENSE)
+<br>
+[![PyPI monthly downloads](https://img.shields.io/pypi/dm/pysignalr?color=2c2c2c)](https://pypi.org/project/pysignalr/)
+[![GitHub issues](https://img.shields.io/github/issues/baking-bad/pysignalr?color=2c2c2c)](https://github.com/baking-bad/pysignalr/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/baking-bad/pysignalr?color=2c2c2c)](https://github.com/baking-bad/pysignalr/pulls)
+[![GitHub Discussions](https://img.shields.io/github/discussions/baking-bad/pysignalr?color=2c2c2c)](https://github.com/baking-bad/pysignalr/discussions)
+
+**pysignalr** is a modern, reliable, and async-ready client for [SignalR protocol](https://docs.microsoft.com/en-us/aspnet/core/signalr/introduction?view=aspnetcore-5.0). This project started as an asyncio fork of mandrewcito's [signalrcore](https://github.com/mandrewcito/signalrcore) library and ended up as a complete rewrite.
 
 ## Usage
 
-Let's connect to [TzKT](https://tzkt.io/), indexer and explorer of Tezos blockchain, and subscribe to all operations:
+Let's connect to [TzKT](https://tzkt.io/), an API and block explorer of Tezos blockchain, and subscribe to all operations:
 
 ```python
 import asyncio
