@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Added
 
 - Python 3.11 support.
+- macOS and arm64 support.
 
 ### Fixed
 

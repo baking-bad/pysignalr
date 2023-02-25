@@ -21,11 +21,11 @@ classifiers = [
 ]
 homepage = "https://github.com/baking-bad/pysignalr"
 authors = [
-    "Lev Gorodetskiy <pysignalr@drsr.io>",
+    "Lev Gorodetskii <pysignalr@drsr.io>",
     "mandrewcito <anbaalo@gmail.com>",
 ]
 maintainers = [
-    "Lev Gorodetskiy <pysignalr@drsr.io>",
+    "Lev Gorodetskii <pysignalr@drsr.io>",
 ]
 readme = "README.md"
 
