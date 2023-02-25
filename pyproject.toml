@@ -21,11 +21,11 @@ classifiers = [
 ]
 homepage = "https://github.com/baking-bad/pysignalr"
 authors = [
-    "Lev Gorodetskiy <github@droserasprout.space>",
+    "Lev Gorodetskiy <pysignalr@drsr.io>",
     "mandrewcito <anbaalo@gmail.com>",
 ]
 maintainers = [
-    "Lev Gorodetskiy <github@droserasprout.space>",
+    "Lev Gorodetskiy <pysignalr@drsr.io>",
 ]
 readme = "README.md"
 
@@ -42,9 +42,8 @@ msgpack = "^1.0.2"
 [tool.poetry.dev-dependencies]
 black = "*"
 diff-cover = "*"
-flake8-comprehensions = "*"
-flake8-bugbear = "*"
-flakeheaven = "*"
+docker = "*"
+ruff = "*"
 isort = "*"
 mypy = "*"
 pytest = "*"
@@ -57,18 +56,18 @@ force_single_line = true
 
 [tool.black]
 line-length = 120
-target-version = ["py38"]
+target-version = ["py38", "py39", "py310", "py311"]
 skip-string-normalization = true
 
-[tool.flakeheaven]
-max_line_length = 120
-
-[tool.flakeheaven.plugins]
-"*" = ["+*"]
-pycodestyle = ["-*"]
+[tool.ruff]
+line-length = 120
+ignore = ["E501", "B905"]
+target-version = "py311"
+extend-select = ["B", "C4", "Q"]  # todo: G, PTH, RET, RUF, S, TCH
+flake8-quotes = {inline-quotes = "single", multiline-quotes = "double"}
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.11"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

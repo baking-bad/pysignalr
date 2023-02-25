@@ -129,7 +129,6 @@ class MessagepackProtocol(Protocol):
         buffer = b''
 
         while True:
-
             byte = value & 0x7F
             value >>= 7
 

@@ -2,14 +2,17 @@
 
 ## [Unreleased]
 
+### Added
+
+- Python 3.11 support.
+
 ### Fixed
 
-- Fixed client streaming methods.
+- Fixed crash when using client streaming methods.
 
 ### Other
 
 - `websockets` library updated to 10.4.
-- Enable `--strict` flag for mypy.
 
 ## 0.1.2 - 2022-05-24
 

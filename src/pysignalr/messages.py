@@ -24,8 +24,6 @@ class HandshakeResponseMessage(HandshakeMessage):
 
 
 class MessageType(IntEnum):
-    value: int
-
     _ = 9999
     invocation = 1
     stream_item = 2

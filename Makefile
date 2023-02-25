@@ -19,7 +19,7 @@ install:        ## Install project dependencies
 	`if [ "${DEV}" = "0" ]; then echo "--without dev"; fi`
 
 lint:           ## Lint with all tools
-	make isort black flake mypy
+	make isort black ruff mypy
 
 test:           ## Run test suite
 	poetry run pytest --cov-report=term-missing --cov=pysignalr --cov-report=xml -s -v tests
@@ -29,11 +29,11 @@ test:           ## Run test suite
 isort:          ## Format with isort
 	poetry run isort src tests example.py
 
-black:           ## Format with black
+black:          ## Format with black
 	poetry run black src tests example.py
 
-flake:          ## Lint with flake8
-	poetry run flakeheaven lint src tests example.py
+ruff:           ## Lint with ruff
+	poetry run ruff check src tests example.py
 
 mypy:           ## Lint with mypy
 	poetry run mypy --strict src tests example.py
@@ -49,3 +49,9 @@ build:          ## Build Python wheel package
 clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
 	rm -r ~/.cache/flakeheaven
+
+update:         ## Update dependencies, export requirements.txt
+	rm requirements.* poetry.lock
+	make install
+	poetry export --without-hashes -o requirements.txt
+

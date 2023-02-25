@@ -47,7 +47,7 @@ class JSONProtocol(Protocol):
         messages: List[Message] = []
 
         for item in raw_messages:
-            if item in ("", self.record_separator):
+            if item in ('', self.record_separator):
                 continue
 
             dict_message = json.loads(item)
@@ -69,7 +69,7 @@ class JSONProtocol(Protocol):
         data = json.loads(messages[0])
         idx = raw_message.index(self.record_separator)
         return (
-            HandshakeResponseMessage(data.get("error", None)),
+            HandshakeResponseMessage(data.get('error', None)),
             self.decode(raw_message[idx + 1 :]) if len(messages) > 1 else [],
         )
 
@@ -78,12 +78,12 @@ class JSONProtocol(Protocol):
         message_type = MessageType(dict_message.pop('type', 'close'))
 
         if message_type is MessageType.invocation:
-            dict_message["invocation_id"] = dict_message.pop("invocationId", None)
+            dict_message['invocation_id'] = dict_message.pop('invocationId', None)
             return InvocationMessage(**dict_message)
         elif message_type is MessageType.stream_item:
             return StreamItemMessage(**dict_message)
         elif message_type is MessageType.completion:
-            dict_message["invocation_id"] = dict_message.pop("invocationId", None)
+            dict_message['invocation_id'] = dict_message.pop('invocationId', None)
             return CompletionMessage(**dict_message)
         elif message_type is MessageType.stream_invocation:
             return StreamInvocationMessage(**dict_message)
@@ -92,7 +92,7 @@ class JSONProtocol(Protocol):
         elif message_type is MessageType.ping:
             return PingMessage()
         elif message_type is MessageType.close:
-            dict_message["allow_reconnect"] = dict_message.pop("allowReconnect", None)
+            dict_message['allow_reconnect'] = dict_message.pop('allowReconnect', None)
             return CloseMessage(**dict_message)
         else:
             raise NotImplementedError
