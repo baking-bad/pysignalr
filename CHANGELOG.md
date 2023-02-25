@@ -8,7 +8,7 @@
 
 ### Fixed
 
-- Fixed crash when using client streaming methods.
+- Fixed client streaming methods.
 
 ### Other
 
