@@ -1,5 +1,9 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
+
 ## [Unreleased]
 
 ### Added
@@ -14,7 +18,7 @@
 
 - `websockets` library updated to 10.4.
 
-## 0.1.2 - 2022-05-24
+## [0.1.2] - 2022-05-24
 
 ### Improved
 
@@ -28,12 +32,22 @@
 
 - `websockets` library updated to 10.3.
 
-## 0.1.1 - 2022-01-06
+## [0.1.1] - 2022-01-06
 
 ### Fixed
 
 - Fixed exceptions raised on server error.
 
-## 0.1.0 - 2021-11-22
+## [0.1.0] - 2021-11-22
 
 Initial release.
+
+<!-- Links -->
+[keep a changelog]: https://keepachangelog.com/en/1.0.0/
+[semantic versioning]: https://semver.org/spec/v2.0.0.html
+
+<!-- Versions -->
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/0.1.2...HEAD
+[0.1.2]: https://github.com/dipdup-io/dipdup/compare/0.1.1...0.1.2
+[0.1.1]: https://github.com/dipdup-io/dipdup/compare/0.1.0...0.1.1
+[0.1.0]: https://github.com/dipdup-io/dipdup/releases/tag/0.1.0
