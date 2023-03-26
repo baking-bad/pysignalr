@@ -58,4 +58,4 @@ async def __aiter__(
             backoff_delay = self.BACKOFF_MIN
 
 
-websockets.legacy.client.Connect.__aiter__ = __aiter__  # type: ignore[assignment]
+websockets.legacy.client.Connect.__aiter__ = __aiter__  # type: ignore[method-assign]
