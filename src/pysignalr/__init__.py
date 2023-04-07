@@ -1,4 +1,6 @@
-__version__ = '0.1.2'
+import importlib.metadata
+
+__version__ = importlib.metadata.version('pysignalr')
 
 import asyncio
 import random
