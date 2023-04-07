@@ -15,13 +15,16 @@ class NegotiationTimeout(Exception):
     pass
 
 
-async def __aiter__(self) -> AsyncIterator[websockets.legacy.client.WebSocketClientProtocol]:
+async def __aiter__(
+    self: websockets.legacy.client.Connect,
+) -> AsyncIterator[websockets.legacy.client.WebSocketClientProtocol]:
     backoff_delay = self.BACKOFF_MIN
     while True:
         try:
             async with self as protocol:
                 yield protocol
 
+        # NOTE: The following block was added to the original code to handle expired connection URLs.
         except InvalidStatusCode as e:
             if e.status_code == HTTPStatus.NOT_FOUND:
                 raise NegotiationTimeout from e
@@ -34,14 +37,14 @@ async def __aiter__(self) -> AsyncIterator[websockets.legacy.client.WebSocketCli
             if backoff_delay == self.BACKOFF_MIN:
                 initial_delay = random.random() * self.BACKOFF_INITIAL
                 self.logger.info(
-                    "! connect failed; reconnecting in %.1f seconds",
+                    '! connect failed; reconnecting in %.1f seconds',
                     initial_delay,
                     exc_info=True,
                 )
                 await asyncio.sleep(initial_delay)
             else:
                 self.logger.info(
-                    "! connect failed again; retrying in %d seconds",
+                    '! connect failed again; retrying in %d seconds',
                     int(backoff_delay),
                     exc_info=True,
                 )
@@ -55,4 +58,4 @@ async def __aiter__(self) -> AsyncIterator[websockets.legacy.client.WebSocketCli
             backoff_delay = self.BACKOFF_MIN
 
 
-websockets.legacy.client.Connect.__aiter__ = __aiter__  # type: ignore
+websockets.legacy.client.Connect.__aiter__ = __aiter__  # type: ignore[method-assign]

@@ -1,18 +1,32 @@
 [tool]
 [tool.poetry]
 name = "pysignalr"
-version = "0.1.2"
+version = "0.2.0"
 description = "Modern, reliable and async-ready client for SignalR protocol"
 keywords = ["signalr", "asp", "client", "asyncio", "json", "messagepack", "websockets"]
 classifiers = [
-    "Programming Language :: Python :: 3.8",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Typing :: Typed",
 ]
-homepage = "https://github.com/dipdup-net/pysignalr"
+repository = "https://github.com/baking-bad/pysignalr"
+homepage = "https://github.com/baking-bad/pysignalr"
 authors = [
-    "Lev Gorodetskiy <github@droserasprout.space>",
-    "mandrewcito <anbaalo@gmail.com>"
+    "Lev Gorodetskii <pysignalr@drsr.io>",
+    "mandrewcito <anbaalo@gmail.com>",
+]
+maintainers = [
+    "Lev Gorodetskii <pysignalr@drsr.io>",
 ]
 readme = "README.md"
 
@@ -21,47 +35,55 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-websockets = "10.3"
+python = ">=3.8,<3.12"
+websockets = "^10.3"
 aiohttp = "^3.7.4"
 msgpack = "^1.0.2"
 
 [tool.poetry.dev-dependencies]
-black = "^22.1.0"
-bump2version = "^1.0.1"
-diff-cover = "^5.0.1"
-isort = "^5.9.3"
-mypy = "^0.910"
-pytest = "^6.2.5"
-pytest-cov = "^3.0.0"
-flake8 = "^3.9.2"
-flake8-return = "^1.1.3"
-flake8-comprehensions = "^3.8.0"
-flake8-bugbear = "^22.1.11"
-flake8-simplify = "^0.14.5"
-flakehell = "^0.9.0"
+black = "*"
+diff-cover = "*"
+docker = "*"
+ruff = "*"
+isort = "*"
+mypy = "*"
+pytest = "*"
+pytest-asyncio = "*"
+pytest-cov = "*"
 
 [tool.isort]
-line_length = 140
+line_length = 120
 force_single_line = true
 
 [tool.black]
-line-length = 140
-target-version = ['py38']
+line-length = 120
+target-version = ["py38", "py39", "py310", "py311"]
 skip-string-normalization = true
 
-[tool.flakehell]
-format = "colored"
-max_line_length = 140
-show_source = true
-extended_default_ignore = []
+[tool.ruff]
+line-length = 120
+ignore = ["E501", "B905"]
+target-version = "py311"
+extend-select = ["B", "C4", "Q"]  # todo: G, PTH, RET, RUF, S, TCH
+flake8-quotes = {inline-quotes = "single", multiline-quotes = "double"}
 
-[tool.flakehell.plugins]
-pyflakes = ["+*"]
-"flake8-*" = ["+*"]
-flake8-docstrings = ["-*"]
-flake8-simplify = ["-SIM106"]
+[tool.mypy]
+python_version = "3.11"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise FrameworkError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
 
 [build-system]
-requires = ["poetry_core>=1.0.0"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

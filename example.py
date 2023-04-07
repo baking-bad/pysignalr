@@ -1,6 +1,9 @@
 import asyncio
 from contextlib import suppress
-from typing import Any, Dict, List
+from typing import Any
+from typing import Dict
+from typing import List
+
 from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage
 
@@ -21,8 +24,8 @@ async def on_error(message: CompletionMessage) -> None:
     print(f'Received error: {message.error}')
 
 
-async def main():
-    client = SignalRClient('https://api.tzkt.io/v1/events')
+async def main() -> None:
+    client = SignalRClient('https://api.tzkt.io/v1/ws')
 
     client.on_open(on_open)
     client.on_close(on_close)

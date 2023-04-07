@@ -31,6 +31,11 @@ from pysignalr.transport.websocket import DEFAULT_MAX_SIZE
 from pysignalr.transport.websocket import DEFAULT_PING_INTERVAL
 from pysignalr.transport.websocket import WebsocketTransport
 
+EmptyCallback = Callable[[], Awaitable[None]]
+AnyCallback = Callable[[Any], Awaitable[None]]
+MessageCallback = Callable[[Message], Awaitable[None]]
+CompletionMessageCallback = Callable[[CompletionMessage], Awaitable[None]]
+
 
 class ClientStream:
     """Client to server streaming
@@ -44,15 +49,15 @@ class ClientStream:
 
     async def send(self, item: Any) -> None:
         """Send next item to the server"""
-        self.transport.send(StreamItemMessage(self.invocation_id, item))
+        await self.transport.send(StreamItemMessage(self.invocation_id, item))
 
     async def invoke(self) -> None:
         """Start streaming"""
-        self.transport.send(InvocationClientStreamMessage([self.invocation_id], self.target, []))
+        await self.transport.send(InvocationClientStreamMessage([self.invocation_id], self.target, []))
 
     async def complete(self) -> None:
         """Finish streaming"""
-        self.transport.send(CompletionClientStreamMessage(self.invocation_id))
+        await self.transport.send(CompletionClientStreamMessage(self.invocation_id))
 
 
 class SignalRClient:
@@ -69,9 +74,11 @@ class SignalRClient:
         self._protocol = protocol or JSONProtocol()
         self._headers = headers or {}
 
-        self._message_handlers: DefaultDict[str, List[Optional[Callable]]] = defaultdict(list)
-        self._stream_handlers: Dict[str, Tuple[Optional[Callable], Optional[Callable], Optional[Callable]]] = {}
-        self._invocation_handlers: Dict[str, Optional[Callable]] = {}
+        self._message_handlers: DefaultDict[str, List[Optional[MessageCallback]]] = defaultdict(list)
+        self._stream_handlers: Dict[
+            str, Tuple[Optional[MessageCallback], Optional[MessageCallback], Optional[CompletionMessageCallback]]
+        ] = {}
+        self._invocation_handlers: Dict[str, Optional[MessageCallback]] = {}
 
         self._transport = WebsocketTransport(
             url=self._url,
@@ -82,24 +89,24 @@ class SignalRClient:
             connection_timeout=connection_timeout,
             max_size=max_size,
         )
-        self._error_callback: Optional[Callable[[CompletionMessage], Awaitable[None]]] = None
+        self._error_callback: Optional[CompletionMessageCallback] = None
 
     async def run(self) -> None:
         await self._transport.run()
 
-    def on(self, event: str, callback: Callable[..., Awaitable[None]]) -> None:
+    def on(self, event: str, callback: AnyCallback) -> None:
         """Register a callback on the specified event"""
         self._message_handlers[event].append(callback)
 
-    def on_open(self, callback: Callable[[], Awaitable[None]]) -> None:
+    def on_open(self, callback: EmptyCallback) -> None:
         """Register a callback on successful connection"""
         self._transport.on_open(callback)
 
-    def on_close(self, callback: Callable[[], Awaitable[None]]) -> None:
+    def on_close(self, callback: EmptyCallback) -> None:
         """Register a callback on connection close"""
         self._transport.on_close(callback)
 
-    def on_error(self, callback: Callable[[CompletionMessage], Awaitable[None]]) -> None:
+    def on_error(self, callback: CompletionMessageCallback) -> None:
         """Register a callback on error"""
         self._error_callback = callback
 
@@ -107,7 +114,7 @@ class SignalRClient:
         self,
         method: str,
         arguments: List[Dict[str, Any]],
-        on_invocation: Optional[Callable[[CompletionMessage], Awaitable[None]]] = None,
+        on_invocation: Optional[MessageCallback] = None,
     ) -> None:
         """Send a message to the server"""
         invocation_id = str(uuid.uuid4())
@@ -119,9 +126,9 @@ class SignalRClient:
         self,
         event: str,
         event_params: List[str],
-        on_next: Optional[Callable] = None,
-        on_complete: Optional[Callable] = None,
-        on_error: Optional[Callable] = None,
+        on_next: Optional[MessageCallback] = None,
+        on_complete: Optional[MessageCallback] = None,
+        on_error: Optional[CompletionMessageCallback] = None,
     ) -> None:
         """Invoke stream on the specified event"""
         invocation_id = str(uuid.uuid4())
@@ -139,7 +146,7 @@ class SignalRClient:
 
     async def _on_message(self, message: Message) -> None:
         # TODO: https://github.com/aspnet/SignalR/blob/master/clients/java/signalr/src/main/java/com/microsoft/signalr/InvocationBindingFailureMessage.java
-        if message.type == MessageType.invocation_binding_failure:  # type: ignore
+        if message.type == MessageType.invocation_binding_failure:  # type: ignore[attr-defined]
             raise ServerError(str(message))
 
         elif isinstance(message, PingMessage):
@@ -189,7 +196,7 @@ class SignalRClient:
     async def _on_cancel_invocation_message(self, message: CancelInvocationMessage) -> None:
         _, _, callback = self._stream_handlers[message.invocation_id]
         if callback:
-            await callback(message)
+            await callback(message)  # type: ignore[arg-type]
 
     async def _on_close_message(self, message: CloseMessage) -> None:
         if message.error:

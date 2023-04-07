@@ -4,8 +4,8 @@ from typing import List
 
 http_schemas = ('http', 'https')
 websocket_schemas = ('ws', 'wss')
-http_to_ws = {k: v for k, v in zip(http_schemas, websocket_schemas)}
-ws_to_http = {k: v for k, v in zip(websocket_schemas, http_schemas)}
+http_to_ws = {k: v for k, v in zip(http_schemas, websocket_schemas)}  # noqa: C416
+ws_to_http = {k: v for k, v in zip(websocket_schemas, http_schemas)}  # noqa: C416
 
 
 def replace_scheme(url: str, ws: bool) -> str:
