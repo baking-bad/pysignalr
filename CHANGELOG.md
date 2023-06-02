@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - `BaseJSONProtocol` and `BaseWebsocketTransport` classes for plain JSON over WebSockets and custom protocols.
 
+### Other
+
+- `websockets` library updated to 11.0.3.
+- Use faster `orjson` library for JSON deserialization.
+
 ## [0.2.0] - 2023-04-07
 
 ### Added

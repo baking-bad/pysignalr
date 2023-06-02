@@ -1,5 +1,4 @@
 # TODO: Refactor this module
-import json
 from collections import deque
 from typing import Any
 from typing import Deque
@@ -11,6 +10,7 @@ from typing import Union
 from typing import cast
 
 import msgpack  # type: ignore[import]
+import orjson
 
 from pysignalr.messages import CancelInvocationMessage
 from pysignalr.messages import CloseMessage
@@ -81,7 +81,7 @@ class MessagepackProtocol(Protocol):
         has_various_messages = 0x1E in raw_message
         handshake_data = raw_message[0 : raw_message.index(0x1E)] if has_various_messages else raw_message
         messages = self.decode(raw_message[raw_message.index(0x1E) + 1 :]) if has_various_messages else []
-        data = json.loads(handshake_data)
+        data = orjson.loads(handshake_data)
         return HandshakeResponseMessage(data.get('error', None)), messages
 
     @staticmethod

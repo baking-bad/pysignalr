@@ -1,4 +1,3 @@
-import json
 from json import JSONEncoder
 from typing import Any
 from typing import Dict
@@ -6,6 +5,8 @@ from typing import Iterable
 from typing import List
 from typing import Tuple
 from typing import Union
+
+import orjson
 
 from pysignalr.messages import CancelInvocationMessage  # 5
 from pysignalr.messages import CloseMessage  # 7
@@ -67,7 +68,7 @@ class JSONProtocol(Protocol):
             if item in ('', self.record_separator):
                 continue
 
-            dict_message = json.loads(item)
+            dict_message = orjson.loads(item)
             if dict_message:
                 messages.append(self.parse_message(dict_message))
 
@@ -83,7 +84,7 @@ class JSONProtocol(Protocol):
         # TODO: Cleanup
         messages = raw_message.split(self.record_separator)
         messages = list(filter(bool, messages))
-        data = json.loads(messages[0])
+        data = orjson.loads(messages[0])
         idx = raw_message.index(self.record_separator)
         return (
             HandshakeResponseMessage(data.get('error', None)),
