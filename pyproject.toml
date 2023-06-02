@@ -39,6 +39,7 @@ python = ">=3.8,<3.12"
 websockets = "^11.0.3"
 aiohttp = "^3.7.4"
 msgpack = "^1.0.2"
+orjson = "^3.9.0"
 
 [tool.poetry.dev-dependencies]
 black = "*"
