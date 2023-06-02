@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- `BaseJSONProtocol` and `BaseWebsocketTransport` classes for plain JSON over WebSockets and custom protocols.
+
 ## [0.2.0] - 2023-04-07
 
 ### Added
