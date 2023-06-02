@@ -13,8 +13,8 @@ from aiohttp import ClientTimeout
 from aiohttp import ServerConnectionError
 from websockets.client import WebSocketClientProtocol
 from websockets.client import connect
-from websockets.connection import State
 from websockets.exceptions import ConnectionClosed
+from websockets.protocol import State
 
 import pysignalr.exceptions as exceptions
 from pysignalr import NegotiationTimeout
