@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Other
+
+- `websockets` library updated to 11.0.3.
+- Use faster `orjson` library for JSON deserialization.
+
 ## [0.2.0] - 2023-04-07
 
 ### Added
