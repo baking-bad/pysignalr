@@ -15,6 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Typing :: Typed",
@@ -35,7 +36,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.12"
+python = ">=3.8,<4"
 websockets = "^11.0.3"
 aiohttp = "^3.7.4"
 msgpack = "^1.0.2"
@@ -58,13 +59,13 @@ force_single_line = true
 
 [tool.black]
 line-length = 120
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ["py38", "py39", "py310", "py311", "py312"]
 skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
 ignore = ["E501", "B905"]
-target-version = "py311"
+target-version = "py312"
 extend-select = ["B", "C4", "Q"]  # todo: G, PTH, RET, RUF, S, TCH
 flake8-quotes = {inline-quotes = "single", multiline-quotes = "double"}
 
