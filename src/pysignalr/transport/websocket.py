@@ -149,7 +149,7 @@ class WebsocketTransport(Transport):
 
     async def _get_connection(self) -> WebSocketClientProtocol:
         try:
-            await self._connected.wait()
+            await asyncio.wait_for(self._connected.wait(), self._connection_timeout)
         except asyncio.TimeoutError as e:
             raise RuntimeError('The socket was never run') from e
         if not self._ws or self._ws.state != State.OPEN:
