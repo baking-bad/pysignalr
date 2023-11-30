@@ -148,7 +148,10 @@ class WebsocketTransport(Transport):
         self._state = state
 
     async def _get_connection(self) -> WebSocketClientProtocol:
-        await self._connected.wait()
+        try:
+            await asyncio.wait_for(self._connected.wait(), self._connection_timeout)
+        except asyncio.TimeoutError as e:
+            raise RuntimeError('The socket was never run') from e
         if not self._ws or self._ws.state != State.OPEN:
             raise RuntimeError('Connection is closed')
         return self._ws

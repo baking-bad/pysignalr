@@ -9,7 +9,7 @@ from typing import Tuple
 from typing import Union
 from typing import cast
 
-import msgpack  # type: ignore[import]
+import msgpack  # type: ignore[import-untyped]
 import orjson
 
 from pysignalr.messages import CancelInvocationMessage
