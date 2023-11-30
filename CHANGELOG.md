@@ -6,9 +6,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- Python 3.12 support.
+
 ### Other
 
-- `websockets` library updated to 11.0.3.
+- `websockets` library updated to 12.0.
 - Use faster `orjson` library for JSON deserialization.
 
 ## [0.2.0] - 2023-04-07
