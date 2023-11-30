@@ -12,10 +12,12 @@ from pysignalr.messages import CancelInvocationMessage  # 5
 from pysignalr.messages import CloseMessage  # 7
 from pysignalr.messages import CompletionMessage  # 3
 from pysignalr.messages import HandshakeMessage
+from pysignalr.messages import HandshakeRequestMessage
 from pysignalr.messages import HandshakeResponseMessage
 from pysignalr.messages import InvocationMessage  # 1
 from pysignalr.messages import Message
 from pysignalr.messages import MessageType
+from pysignalr.messages import JSONMessage  # virtual
 from pysignalr.messages import PingMessage  # 6
 from pysignalr.messages import StreamInvocationMessage  # 4
 from pysignalr.messages import StreamItemMessage  # 2
@@ -30,6 +32,21 @@ class MessageEncoder(JSONEncoder):
 
 
 message_encoder = MessageEncoder()
+
+
+class BaseJSONProtocol(Protocol):
+    def __init__(self) -> None:
+        pass
+
+    def decode(self, raw_message: Union[str, bytes]) -> Tuple[JSONMessage]:
+        json_message = orjson.loads(raw_message)
+        return (JSONMessage(data=json_message),)
+
+    def encode(self, message: Union[Message, HandshakeRequestMessage]) -> Union[str, bytes]:
+        return orjson.dumps(message.dump())
+
+    def decode_handshake(self, raw_message: Union[str, bytes]) -> Tuple[HandshakeResponseMessage, Iterable[Message]]:
+        raise NotImplementedError
 
 
 class JSONProtocol(Protocol):

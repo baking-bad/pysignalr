@@ -215,3 +215,11 @@ class WebsocketTransport(Transport):
 
     async def _on_message(self, message: Message) -> None:
         await self._callback(message)
+
+
+class BaseWebsocketTransport(WebsocketTransport):
+    async def _keepalive(self, conn: WebSocketClientProtocol) -> None:
+        return
+
+    async def _handshake(self, conn: WebSocketClientProtocol) -> None:
+        return

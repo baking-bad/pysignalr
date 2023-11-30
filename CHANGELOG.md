@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Added
 
 - Python 3.12 support.
+- `BaseJSONProtocol` and `BaseWebsocketTransport` classes for plain JSON over WebSockets and custom protocols.
 
 ### Other
 
