@@ -15,9 +15,9 @@ from pysignalr.messages import HandshakeMessage
 from pysignalr.messages import HandshakeRequestMessage
 from pysignalr.messages import HandshakeResponseMessage
 from pysignalr.messages import InvocationMessage  # 1
+from pysignalr.messages import JSONMessage  # virtual
 from pysignalr.messages import Message
 from pysignalr.messages import MessageType
-from pysignalr.messages import JSONMessage  # virtual
 from pysignalr.messages import PingMessage  # 6
 from pysignalr.messages import StreamInvocationMessage  # 4
 from pysignalr.messages import StreamItemMessage  # 2

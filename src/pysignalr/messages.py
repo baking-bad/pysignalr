@@ -332,6 +332,7 @@ class StreamItemMessage(Message, type_=MessageType.stream_item):
 
 class JSONMessage(Message, type_=MessageType._):
     """Not a real message type; used in BaseJSONProtocol to skip pysignalr-specific things"""
+
     def __init__(self, data: Dict[str, Any]) -> None:
         self.data = data
 
