@@ -1,14 +1,13 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import IntEnum
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
 
 
 @dataclass
 class HandshakeMessage:
-    def dump(self) -> Dict[str, Any]:
+    def dump(self) -> dict[str, Any]:
         return self.__dict__
 
 
@@ -20,7 +19,7 @@ class HandshakeRequestMessage(HandshakeMessage):
 
 @dataclass
 class HandshakeResponseMessage(HandshakeMessage):
-    error: Optional[str]
+    error: str | None
 
 
 class MessageType(IntEnum):
@@ -40,7 +39,7 @@ class Message:
     def __init_subclass__(cls, type_: MessageType) -> None:
         cls.type = type_  # type: ignore[attr-defined]
 
-    def dump(self) -> Dict[str, Any]:
+    def dump(self) -> dict[str, Any]:
         data = self.__dict__
 
         invocation_id = data.pop('invocation_id', None)
@@ -57,8 +56,8 @@ class Message:
 
 @dataclass
 class ResponseMessage(Message, type_=MessageType._):
-    error: Optional[str]
-    result: Optional[Any]
+    error: str | None
+    result: Any | None
 
 
 """
@@ -80,7 +79,7 @@ Example
 @dataclass
 class CancelInvocationMessage(Message, type_=MessageType.cancel_invocation):
     invocation_id: str
-    headers: Optional[Dict[str, Any]] = None
+    headers: dict[str, Any] | None = None
 
 
 """
@@ -109,9 +108,9 @@ Example - A `Close` message with an error
 
 @dataclass
 class CloseMessage(Message, type_=MessageType.close):
-    error: Optional[str] = None
-    allow_reconnect: Optional[bool] = None
-    headers: Optional[Dict[str, Any]] = None
+    error: str | None = None
+    allow_reconnect: bool | None = None
+    headers: dict[str, Any] | None = None
 
 
 """
@@ -175,15 +174,15 @@ Example - The following `Completion` message is a protocol error
 @dataclass
 class CompletionClientStreamMessage(Message, type_=MessageType.stream_item):
     invocation_id: str
-    headers: Optional[Dict[str, Any]] = None
+    headers: dict[str, Any] | None = None
 
 
 @dataclass
 class CompletionMessage(Message, type_=MessageType.completion):
     invocation_id: str
-    result: Optional[Any] = None
-    error: Optional[str] = None
-    headers: Optional[Dict[str, Any]] = None
+    result: Any | None = None
+    error: str | None = None
+    headers: dict[str, Any] | None = None
 
 
 """
@@ -234,15 +233,15 @@ class InvocationMessage(Message, type_=MessageType.invocation):
     invocation_id: str
     target: str
     arguments: Any
-    headers: Optional[Dict[str, Any]] = None
+    headers: dict[str, Any] | None = None
 
 
 @dataclass
 class InvocationClientStreamMessage(Message, type_=MessageType.invocation):
-    stream_ids: List[str]
+    stream_ids: list[str]
     target: str
     arguments: Any
-    headers: Optional[Dict[str, Any]] = None
+    headers: dict[str, Any] | None = None
 
 
 """
@@ -299,7 +298,7 @@ class StreamInvocationMessage(Message, type_=MessageType.stream_invocation):
     invocation_id: str
     target: str
     arguments: Any
-    headers: Optional[Dict[str, Any]] = None
+    headers: dict[str, Any] | None = None
 
 
 """
@@ -327,14 +326,14 @@ Example
 class StreamItemMessage(Message, type_=MessageType.stream_item):
     invocation_id: str
     item: Any
-    headers: Optional[Dict[str, Any]] = None
+    headers: dict[str, Any] | None = None
 
 
 class JSONMessage(Message, type_=MessageType._):
     """Not a real message type; used in BaseJSONProtocol to skip pysignalr-specific things"""
 
-    def __init__(self, data: Dict[str, Any]) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
         self.data = data
 
-    def dump(self) -> Dict[str, Any]:
+    def dump(self) -> dict[str, Any]:
         return self.data

@@ -47,15 +47,10 @@ black = "*"
 diff-cover = "*"
 docker = "*"
 ruff = "*"
-isort = "*"
 mypy = "*"
 pytest = "*"
 pytest-asyncio = "*"
 pytest-cov = "*"
-
-[tool.isort]
-line_length = 120
-force_single_line = true
 
 [tool.black]
 line-length = 120
@@ -64,26 +59,34 @@ skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
-ignore = ["E501", "B905"]
-target-version = "py312"
-extend-select = ["B", "C4", "Q"]  # todo: G, PTH, RET, RUF, S, TCH
-flake8-quotes = {inline-quotes = "single", multiline-quotes = "double"}
+ignore = [
+    "E402",  # module level import not at top of file
+    "E501",  # line too long
+    "TCH001", # breaks our runtime Pydantic magic
+]
+target-version = "py38"
+extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RUF", "TCH", "UP"]
+flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
+isort = { force-single-line = true, known-first-party = ["pysignalr"] }
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.8"
+strict = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+log_cli_level = "WARNING"
 
 [tool.coverage.report]
+precision = 2
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
-    "raise FrameworkError",
     "raise NotImplementedError",
     "if __name__ == .__main__.:",
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
+    "if TYPE_CHECKING:",
 ]
 
 [build-system]

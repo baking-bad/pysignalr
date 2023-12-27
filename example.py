@@ -1,8 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 from contextlib import suppress
 from typing import Any
-from typing import Dict
-from typing import List
 
 from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage
@@ -16,7 +16,7 @@ async def on_close() -> None:
     print('Disconnected from the server')
 
 
-async def on_message(message: List[Dict[str, Any]]) -> None:
+async def on_message(message: list[dict[str, Any]]) -> None:
     print(f'Received message: {message}')
 
 

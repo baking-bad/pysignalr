@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import urllib.parse as parse
 from contextlib import suppress
-from typing import List
 
 http_schemas = ('http', 'https')
 websocket_schemas = ('ws', 'wss')
@@ -28,7 +29,7 @@ def get_negotiate_url(url: str) -> str:
     return parse.urlunsplit((scheme, netloc, path, query, fragment))
 
 
-def get_connection_url(url: str, id: List[str]) -> str:
+def get_connection_url(url: str, id: list[str]) -> str:
     scheme, netloc, path, query, fragment = parse.urlsplit(url)
 
     parsed_query = parse.parse_qs(query)
