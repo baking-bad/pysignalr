@@ -4,8 +4,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class HubError(Exception):
-    ...
+class HubError(Exception): ...
 
 
 @dataclass(frozen=True)

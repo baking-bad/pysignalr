@@ -65,6 +65,8 @@ ignore = [
     "TCH001", # breaks our runtime Pydantic magic
 ]
 target-version = "py38"
+
+[tool.ruff.lint]
 extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RUF", "TCH", "UP"]
 flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
 isort = { force-single-line = true, known-first-party = ["pysignalr"] }
