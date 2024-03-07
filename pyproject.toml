@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "pysignalr"
-version = "0.2.0"
+version = "1.0.0"
 description = "Modern, reliable and async-ready client for SignalR protocol"
 keywords = ["signalr", "asp", "client", "asyncio", "json", "messagepack", "websockets"]
 classifiers = [

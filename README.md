@@ -1,6 +1,6 @@
 # pysignalr
 
-[![GitHub stars](https://img.shields.io/github/stars/baking-bad/pysignalr?color=2c2c2c)](https://github.com/baking-bad/pysignalr)
+[![GitHub stars](https://img.shields.io/github/stars/baking-bad/pysignalr?color=2c2c2c&style=plain)](https://github.com/baking-bad/pysignalr)
 [![Latest stable release](https://img.shields.io/github/v/release/baking-bad/pysignalr?label=stable%20release&color=2c2c2c)](https://github.com/baking-bad/pysignalr/releases)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pysignalr?color=2c2c2c)](https://www.python.org)
 [![License: MIT](https://img.shields.io/github/license/baking-bad/pysignalr?color=2c2c2c)](https://github.com/baking-bad/pysignalr/blob/master/LICENSE)
@@ -60,7 +60,7 @@ with suppress(KeyboardInterrupt, asyncio.CancelledError):
     asyncio.run(main())
 ```
 
-## Roadmap to the stable release
+## Roadmap
 
 - [ ] More documentation, both internal and user.
 - [ ] Integration tests with containerized ASP hello-world server.
