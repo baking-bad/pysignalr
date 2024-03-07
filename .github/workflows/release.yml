@@ -15,19 +15,17 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Set up Poetry
         uses: snok/install-poetry@v1
-        with:
-          version: '1.3.2'
 
       - name: Install project
-        run: make install
+        run: poetry install
       - name: Run lint
-        run: make lint
+        run: poetry run make lint
       - name: Run tests
-        run: make test
+        run: poetry run make test
 
       - name: Publish package on PyPi
         run: |
@@ -35,6 +33,7 @@ jobs:
           poetry build
           poetry publish
 
+      # FIXME: Fails on prereleases; https://github.com/mindsers/changelog-reader-action/pull/39
       - name: Parse changelog
         id: changelog
         uses: mindsers/changelog-reader-action@v2
@@ -53,5 +52,5 @@ jobs:
             ## ${{ steps.changelog.outputs.version }} - ${{ steps.changelog.outputs.date }}
 
             ${{ steps.changelog.outputs.changes }}
-          draft: true
+          draft: false
           prerelease: ${{ steps.changelog.outputs.status == 'prereleased' }}

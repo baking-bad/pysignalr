@@ -1,12 +1,10 @@
+from __future__ import annotations
+
 # TODO: Refactor this module
 from collections import deque
 from typing import Any
-from typing import Deque
 from typing import Iterable
-from typing import List
 from typing import Sequence
-from typing import Tuple
-from typing import Union
 from typing import cast
 
 import msgpack  # type: ignore[import-untyped]
@@ -49,8 +47,8 @@ class MessagepackProtocol(Protocol):
             record_separator=chr(0x1E),
         )
 
-    def decode(self, raw_message: Union[str, bytes]) -> List[Message]:
-        messages: List[Message] = []
+    def decode(self, raw_message: str | bytes) -> list[Message]:
+        messages: list[Message] = []
         offset = 0
         while offset < len(raw_message):
             length = msgpack.unpackb(raw_message[offset : offset + 1])
@@ -60,8 +58,8 @@ class MessagepackProtocol(Protocol):
             messages.append(message)
         return messages
 
-    def encode(self, message: Union[Message, HandshakeRequestMessage]) -> bytes:
-        raw_message: Deque[Any] = deque()
+    def encode(self, message: Message | HandshakeRequestMessage) -> bytes:
+        raw_message: deque[Any] = deque()
 
         for attr in _attribute_priority:
             if hasattr(message, attr):
@@ -74,7 +72,7 @@ class MessagepackProtocol(Protocol):
         varint_length = self._to_varint(len(encoded_message))
         return varint_length + encoded_message
 
-    def decode_handshake(self, raw_message: Union[str, bytes]) -> Tuple[HandshakeResponseMessage, Iterable[Message]]:
+    def decode_handshake(self, raw_message: str | bytes) -> tuple[HandshakeResponseMessage, Iterable[Message]]:
         if isinstance(raw_message, str):
             raw_message = raw_message.encode()
 

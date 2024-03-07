@@ -1,12 +1,11 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 from contextlib import suppress
 from http import HTTPStatus
 from typing import Awaitable
 from typing import Callable
-from typing import Dict
-from typing import Optional
-from typing import Union
 
 from aiohttp import ClientSession
 from aiohttp import ClientTimeout
@@ -41,11 +40,11 @@ class WebsocketTransport(Transport):
         url: str,
         protocol: Protocol,
         callback: Callable[[Message], Awaitable[None]],
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
         skip_negotiation: bool = False,
         ping_interval: int = DEFAULT_PING_INTERVAL,
         connection_timeout: int = DEFAULT_CONNECTION_TIMEOUT,
-        max_size: Optional[int] = DEFAULT_MAX_SIZE,
+        max_size: int | None = DEFAULT_MAX_SIZE,
     ):
         super().__init__()
         self._url = url
@@ -59,9 +58,9 @@ class WebsocketTransport(Transport):
 
         self._state = ConnectionState.disconnected
         self._connected = asyncio.Event()
-        self._ws: Optional[WebSocketClientProtocol] = None
-        self._open_callback: Optional[Callable[[], Awaitable[None]]] = None
-        self._close_callback: Optional[Callable[[], Awaitable[None]]] = None
+        self._ws: WebSocketClientProtocol | None = None
+        self._open_callback: Callable[[], Awaitable[None]] | None = None
+        self._close_callback: Callable[[], Awaitable[None]] | None = None
 
     def on_open(self, callback: Callable[[], Awaitable[None]]) -> None:
         self._open_callback = callback
@@ -209,7 +208,7 @@ class WebsocketTransport(Transport):
         else:
             raise exceptions.ServerError(str(data))
 
-    async def _on_raw_message(self, raw_message: Union[str, bytes]) -> None:
+    async def _on_raw_message(self, raw_message: str | bytes) -> None:
         for message in self._protocol.decode(raw_message):
             await self._on_message(message)
 

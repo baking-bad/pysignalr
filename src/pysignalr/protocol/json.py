@@ -1,10 +1,8 @@
+from __future__ import annotations
+
 from json import JSONEncoder
 from typing import Any
-from typing import Dict
 from typing import Iterable
-from typing import List
-from typing import Tuple
-from typing import Union
 
 import orjson
 
@@ -15,9 +13,9 @@ from pysignalr.messages import HandshakeMessage
 from pysignalr.messages import HandshakeRequestMessage
 from pysignalr.messages import HandshakeResponseMessage
 from pysignalr.messages import InvocationMessage  # 1
+from pysignalr.messages import JSONMessage  # virtual
 from pysignalr.messages import Message
 from pysignalr.messages import MessageType
-from pysignalr.messages import JSONMessage  # virtual
 from pysignalr.messages import PingMessage  # 6
 from pysignalr.messages import StreamInvocationMessage  # 4
 from pysignalr.messages import StreamItemMessage  # 2
@@ -25,7 +23,7 @@ from pysignalr.protocol.abstract import Protocol
 
 
 class MessageEncoder(JSONEncoder):
-    def default(self, obj: Union[Message, MessageType]) -> Union[str, int, Dict[str, Any]]:
+    def default(self, obj: Message | MessageType) -> str | int | dict[str, Any]:
         if isinstance(obj, MessageType):
             return obj.value
         return obj.dump()
@@ -38,14 +36,14 @@ class BaseJSONProtocol(Protocol):
     def __init__(self) -> None:
         pass
 
-    def decode(self, raw_message: Union[str, bytes]) -> Tuple[JSONMessage]:
+    def decode(self, raw_message: str | bytes) -> tuple[JSONMessage]:
         json_message = orjson.loads(raw_message)
         return (JSONMessage(data=json_message),)
 
-    def encode(self, message: Union[Message, HandshakeRequestMessage]) -> Union[str, bytes]:
+    def encode(self, message: Message | HandshakeRequestMessage) -> str | bytes:
         return orjson.dumps(message.dump())
 
-    def decode_handshake(self, raw_message: Union[str, bytes]) -> Tuple[HandshakeResponseMessage, Iterable[Message]]:
+    def decode_handshake(self, raw_message: str | bytes) -> tuple[HandshakeResponseMessage, Iterable[Message]]:
         raise NotImplementedError
 
 
@@ -57,12 +55,12 @@ class JSONProtocol(Protocol):
             record_separator=chr(0x1E),
         )
 
-    def decode(self, raw_message: Union[str, bytes]) -> List[Message]:
+    def decode(self, raw_message: str | bytes) -> list[Message]:
         if isinstance(raw_message, bytes):
             raw_message = raw_message.decode()
 
         raw_messages = raw_message.split(self.record_separator)
-        messages: List[Message] = []
+        messages: list[Message] = []
 
         for item in raw_messages:
             if item in ('', self.record_separator):
@@ -74,10 +72,10 @@ class JSONProtocol(Protocol):
 
         return messages
 
-    def encode(self, message: Union[Message, HandshakeMessage]) -> str:
+    def encode(self, message: Message | HandshakeMessage) -> str:
         return message_encoder.encode(message) + self.record_separator
 
-    def decode_handshake(self, raw_message: Union[str, bytes]) -> Tuple[HandshakeResponseMessage, Iterable[Message]]:
+    def decode_handshake(self, raw_message: str | bytes) -> tuple[HandshakeResponseMessage, Iterable[Message]]:
         if isinstance(raw_message, bytes):
             raw_message = raw_message.decode()
 
@@ -92,7 +90,7 @@ class JSONProtocol(Protocol):
         )
 
     @staticmethod
-    def parse_message(dict_message: Dict[str, Any]) -> Message:
+    def parse_message(dict_message: dict[str, Any]) -> Message:
         message_type = MessageType(dict_message.pop('type', 'close'))
 
         if message_type is MessageType.invocation:

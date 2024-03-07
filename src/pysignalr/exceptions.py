@@ -1,10 +1,10 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass(frozen=True)
-class HubError(Exception):
-    ...
+class HubError(Exception): ...
 
 
 @dataclass(frozen=True)
@@ -19,4 +19,4 @@ class ConnectionError(HubError):
 
 @dataclass(frozen=True)
 class ServerError(HubError):
-    message: Optional[str]
+    message: str | None
