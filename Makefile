@@ -16,7 +16,7 @@ lint:           ## Lint with all tools
 	make black ruff mypy
 
 test:           ## Run test suite
-	pytest --cov-report=term-missing --cov=pysignalr --cov-report=xml -s -v tests
+	PYTHONPATH=src poetry run pytest --cov-report=term-missing --cov=pysignalr --cov-report=xml -s -v tests
 
 ##
 

@@ -4,28 +4,20 @@ import asyncio
 import logging
 from contextlib import suppress
 from http import HTTPStatus
-from typing import Awaitable
-from typing import Callable
+from typing import Awaitable, Callable
 
-from aiohttp import ClientSession
-from aiohttp import ClientTimeout
+from aiohttp import ClientSession, ClientTimeout
 from aiohttp import ServerConnectionError
-from websockets.client import WebSocketClientProtocol
-from websockets.client import connect
+from websockets.client import WebSocketClientProtocol, connect
 from websockets.exceptions import ConnectionClosed
 from websockets.protocol import State
 
 import pysignalr.exceptions as exceptions
 from pysignalr import NegotiationTimeout
-from pysignalr.messages import CompletionMessage
-from pysignalr.messages import Message
-from pysignalr.messages import PingMessage
+from pysignalr.messages import CompletionMessage, Message, PingMessage
 from pysignalr.protocol.abstract import Protocol
-from pysignalr.transport.abstract import ConnectionState
-from pysignalr.transport.abstract import Transport
-from pysignalr.utils import get_connection_url
-from pysignalr.utils import get_negotiate_url
-from pysignalr.utils import replace_scheme
+from pysignalr.transport.abstract import ConnectionState, Transport
+from pysignalr.utils import get_connection_url, get_negotiate_url, replace_scheme
 
 DEFAULT_MAX_SIZE = 2**20  # 1 MB
 DEFAULT_PING_INTERVAL = 10
@@ -45,6 +37,7 @@ class WebsocketTransport(Transport):
         ping_interval: int = DEFAULT_PING_INTERVAL,
         connection_timeout: int = DEFAULT_CONNECTION_TIMEOUT,
         max_size: int | None = DEFAULT_MAX_SIZE,
+        access_token_factory: Callable[[], str] | None = None,  # Add token factory
     ):
         super().__init__()
         self._url = url
@@ -55,6 +48,7 @@ class WebsocketTransport(Transport):
         self._ping_interval = ping_interval
         self._connection_timeout = connection_timeout
         self._max_size = max_size
+        self._access_token_factory = access_token_factory  # Store token factory
 
         self._state = ConnectionState.disconnected
         self._connected = asyncio.Event()
@@ -167,6 +161,9 @@ class WebsocketTransport(Transport):
 
     async def _handshake(self, conn: WebSocketClientProtocol) -> None:
         _logger.info('Sending handshake to server')
+        token = self._access_token_factory() if self._access_token_factory else None
+        if token:
+            self._headers["Authorization"] = f"Bearer {token}"
         our_handshake = self._protocol.handshake_message()
         await conn.send(self._protocol.encode(our_handshake))
 
