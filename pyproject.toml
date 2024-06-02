@@ -38,12 +38,12 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4"
-websockets = "^12.0"
-aiohttp = "^3.7.4"
-msgpack = "^1.0.2"
-orjson = "^3.9.0"
+websockets = "*"
+aiohttp = "*"
+msgpack = "*"
+orjson = "*"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "*"
 diff-cover = "*"
 docker = "*"
@@ -52,6 +52,7 @@ mypy = "*"
 pytest = "*"
 pytest-asyncio = "*"
 pytest-cov = "*"
+types-requests = "*"
 
 [tool.black]
 line-length = 120
@@ -60,11 +61,6 @@ skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
-ignore = [
-    "E402",  # module level import not at top of file
-    "E501",  # line too long
-    "TCH001", # breaks our runtime Pydantic magic
-]
 target-version = "py38"
 
 [tool.ruff.lint]
