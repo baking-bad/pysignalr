@@ -152,16 +152,6 @@ A message received from the server upon completion of a method invocation.
 
 - `error` (str): The error message, if any.
 
-## Roadmap
-
-- [x] More documentation, both internal and user.
-- [x] Integration tests with containerized ASP hello-world server.
-- [x] Ensure that authentication works correctly.
-
-## Contributing
-
-Contributions are welcome! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to get involved.
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
