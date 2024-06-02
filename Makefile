@@ -1,5 +1,6 @@
 .ONESHELL:
 .PHONY: $(MAKECMDGOALS)
+SRC = src tests example.py example_with_token.py
 ##
 ##    🚧 pysignalr developer tools
 ##
@@ -16,26 +17,23 @@ lint:           ## Lint with all tools
 	make black ruff mypy
 
 test:           ## Run test suite
-	docker-compose up --build --exit-code-from test_runner test_runner || docker compose down
-
-docs:           ## Generate documentation
-	docker-compose run --rm docs sphinx-build -b html docs/source docs/build || docker compose down
+	pytest --cov-report=term-missing --cov=pysignalr --cov-report=xml --asyncio-mode=auto -s -v tests
 
 ##
 
 black:          ## Format with black
-	docker-compose run --rm formatter 'pip install black && black src tests example.py' || docker compose down
+	black $(SRC)
 
 ruff:           ## Lint with ruff
-	docker-compose run --rm linter 'pip install ruff && ruff check --fix --unsafe-fixes src tests example.py' || docker compose down
+	ruff check --fix --unsafe-fixes $(SRC)
 
 mypy:           ## Lint with mypy
-	docker-compose run --rm linter 'pip install mypy && mypy --strict src tests example.py' || docker compose down
+	mypy --strict $(SRC)
 
 cover:          ## Print coverage for the current branch
-	docker-compose run --rm coverage 'pip install diff-cover && diff-cover --compare-branch `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'` coverage.xml' || docker compose down
+	diff-cover --compare-branch origin/master coverage.xml
 
 ##
 
 clean:          ## Remove all files from .gitignore except for `.venv`
-	sudo git clean -xdf --exclude=".venv"
+	git clean -xdf --exclude=".venv"
