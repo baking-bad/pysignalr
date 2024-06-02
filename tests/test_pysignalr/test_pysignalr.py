@@ -90,160 +90,158 @@ def wait_for_server(url: str, timeout: int = 30) -> None:
         time.sleep(2)
 
 
-async def test_connection(aspnet_server: str) -> None:
-    """
-    Tests connection to the SignalR server.
-    """
-    url = f'http://{aspnet_server}/weatherHub'
-    logging.info('Testing connection to %s', url)
-    client = SignalRClient(url)
+class TestPysignalr:
+    async def test_connection(self, aspnet_server: str) -> None:
+        """
+        Tests connection to the SignalR server.
+        """
+        url = f'http://{aspnet_server}/weatherHub'
+        logging.info('Testing connection to %s', url)
+        client = SignalRClient(url)
 
-    task = asyncio.create_task(client.run())
+        task = asyncio.create_task(client.run())
 
-    async def _on_open() -> None:
-        logging.info('Connection opened, cancelling task')
-        task.cancel()
-
-    client.on_open(_on_open)
-
-    with suppress(asyncio.CancelledError):
-        await task
-
-
-async def test_connection_with_token(aspnet_server: str) -> None:
-    """
-    Tests connection to the SignalR server with a valid token.
-    """
-    login_url = f'http://{aspnet_server}/api/auth/login'
-    logging.info('Attempting to log in at %s', login_url)
-    login_data = {'username': 'test', 'password': 'password'}
-    response = requests.post(login_url, json=login_data, timeout=10)
-    token = response.json().get('token')
-    if not token:
-        pytest.fail('Failed to obtain token from login response')
-
-    url = f'http://{aspnet_server}/weatherHub'
-    logging.info('Testing connection with token to %s', url)
-
-    def token_factory() -> str:
-        return cast(str, token)
-
-    client = SignalRClient(
-        url=url,
-        access_token_factory=token_factory,
-        headers={'mycustomheader': 'mycustomheadervalue'},
-    )
-
-    task = asyncio.create_task(client.run())
-
-    async def _on_open() -> None:
-        logging.info('Connection with token opened, cancelling task')
-        task.cancel()
-
-    client.on_open(_on_open)
-
-    with suppress(asyncio.CancelledError):
-        await task
-
-    # Verify the token in the connection headers
-    assert 'Authorization' in client._transport._headers
-    assert client._transport._headers['Authorization'] == f'Bearer {token}'
-
-
-async def test_invalid_token(aspnet_server: str) -> None:
-    """
-    Tests connection to the SignalR server with an invalid token.
-    """
-    url = f'http://{aspnet_server}/weatherHub'
-    logging.info('Testing connection with invalid token to %s', url)
-
-    def invalid_token_factory() -> str:
-        return 'invalid_token'  # Simulate an invalid token
-
-    client = SignalRClient(
-        url=url,
-        access_token_factory=invalid_token_factory,
-        headers={'mycustomheader': 'mycustomheadervalue'},
-    )
-
-    task = asyncio.create_task(client.run())
-
-    async def _on_open() -> None:
-        logging.info('Connection with invalid token opened, cancelling task')
-        task.cancel()
-
-    client.on_open(_on_open)
-
-    with suppress(asyncio.CancelledError):
-        try:
-            await task
-        except AuthorizationError:
-            logging.info('AuthorizationError caught as expected')
-            pass
-
-    # Verify if the AuthorizationError was raised correctly
-    assert task.cancelled() is True
-
-
-async def test_send_and_receive_message(aspnet_server: str) -> None:
-    """
-    Tests sending and receiving a message with the SignalR server.
-    """
-    login_url = f'http://{aspnet_server}/api/auth/login'
-    logging.info('Attempting to log in at %s', login_url)
-    login_data = {'username': 'test', 'password': 'password'}
-    response = requests.post(login_url, json=login_data, timeout=10)
-    token = response.json().get('token')
-    if not token:
-        logging.error('Failed to obtain token from login response')
-        raise AssertionError('Failed to obtain token from login response')
-    logging.info('Obtained token: %s', token)
-
-    url = f'http://{aspnet_server}/weatherHub'
-    logging.info('Testing send and receive message with token to %s', url)
-
-    def token_factory() -> str:
-        return cast(str, token)
-
-    client = SignalRClient(
-        url=url,
-        access_token_factory=token_factory,
-        headers={'mycustomheader': 'mycustomheadervalue'},
-    )
-
-    received_messages = []
-
-    async def on_message_received(arguments: Any) -> None:
-        user, message = arguments
-        logging.info('Message received from %s: %s', user, message)
-        received_messages.append((user, message))
-        if len(received_messages) >= 1:
+        async def _on_open() -> None:
+            logging.info('Connection opened, cancelling task')
             task.cancel()
 
-    client.on('ReceiveMessage', on_message_received)
+        client.on_open(_on_open)
 
-    task = asyncio.create_task(client.run())
-
-    async def _on_open() -> None:
-        logging.info('Connection with token opened, sending message')
-        await client.send('SendMessage', ['testuser', 'Hello, World!'])  # type: ignore[list-item]
-
-    client.on_open(_on_open)
-
-    try:
         with suppress(asyncio.CancelledError):
             await task
-    except ServerError as e:
-        logging.error('Server error: %s', e)
-        raise
 
-    # Verify if the message was received correctly
-    assert received_messages, 'No messages were received'
-    assert received_messages[0] == (
-        'testuser',
-        'Hello, World!',
-    ), f'Unexpected message received: {received_messages[0]}'
+    async def test_connection_with_token(self, aspnet_server: str) -> None:
+        """
+        Tests connection to the SignalR server with a valid token.
+        """
+        login_url = f'http://{aspnet_server}/api/auth/login'
+        logging.info('Attempting to log in at %s', login_url)
+        login_data = {'username': 'test', 'password': 'password'}
+        response = requests.post(login_url, json=login_data, timeout=10)
+        token = response.json().get('token')
+        if not token:
+            pytest.fail('Failed to obtain token from login response')
 
-    # Log detailed messages received
-    for user, message in received_messages:
-        logging.info('Detailed Log: Message from %s - %s', user, message)
+        url = f'http://{aspnet_server}/weatherHub'
+        logging.info('Testing connection with token to %s', url)
+
+        def token_factory() -> str:
+            return cast(str, token)
+
+        client = SignalRClient(
+            url=url,
+            access_token_factory=token_factory,
+            headers={'mycustomheader': 'mycustomheadervalue'},
+        )
+
+        task = asyncio.create_task(client.run())
+
+        async def _on_open() -> None:
+            logging.info('Connection with token opened, cancelling task')
+            task.cancel()
+
+        client.on_open(_on_open)
+
+        with suppress(asyncio.CancelledError):
+            await task
+
+        # Verify the token in the connection headers
+        assert 'Authorization' in client._transport._headers
+        assert client._transport._headers['Authorization'] == f'Bearer {token}'
+
+    async def test_invalid_token(self, aspnet_server: str) -> None:
+        """
+        Tests connection to the SignalR server with an invalid token.
+        """
+        url = f'http://{aspnet_server}/weatherHub'
+        logging.info('Testing connection with invalid token to %s', url)
+
+        def invalid_token_factory() -> str:
+            return 'invalid_token'  # Simulate an invalid token
+
+        client = SignalRClient(
+            url=url,
+            access_token_factory=invalid_token_factory,
+            headers={'mycustomheader': 'mycustomheadervalue'},
+        )
+
+        task = asyncio.create_task(client.run())
+
+        async def _on_open() -> None:
+            logging.info('Connection with invalid token opened, cancelling task')
+            task.cancel()
+
+        client.on_open(_on_open)
+
+        with suppress(asyncio.CancelledError):
+            try:
+                await task
+            except AuthorizationError:
+                logging.info('AuthorizationError caught as expected')
+                pass
+
+        # Verify if the AuthorizationError was raised correctly
+        assert task.cancelled() is True
+
+    async def test_send_and_receive_message(self, aspnet_server: str) -> None:
+        """
+        Tests sending and receiving a message with the SignalR server.
+        """
+        login_url = f'http://{aspnet_server}/api/auth/login'
+        logging.info('Attempting to log in at %s', login_url)
+        login_data = {'username': 'test', 'password': 'password'}
+        response = requests.post(login_url, json=login_data, timeout=10)
+        token = response.json().get('token')
+        if not token:
+            logging.error('Failed to obtain token from login response')
+            raise AssertionError('Failed to obtain token from login response')
+        logging.info('Obtained token: %s', token)
+
+        url = f'http://{aspnet_server}/weatherHub'
+        logging.info('Testing send and receive message with token to %s', url)
+
+        def token_factory() -> str:
+            return cast(str, token)
+
+        client = SignalRClient(
+            url=url,
+            access_token_factory=token_factory,
+            headers={'mycustomheader': 'mycustomheadervalue'},
+        )
+
+        received_messages = []
+
+        async def on_message_received(arguments: Any) -> None:
+            user, message = arguments
+            logging.info('Message received from %s: %s', user, message)
+            received_messages.append((user, message))
+            if len(received_messages) >= 1:
+                task.cancel()
+
+        client.on('ReceiveMessage', on_message_received)
+
+        task = asyncio.create_task(client.run())
+
+        async def _on_open() -> None:
+            logging.info('Connection with token opened, sending message')
+            await client.send('SendMessage', ['testuser', 'Hello, World!'])  # type: ignore[list-item]
+
+        client.on_open(_on_open)
+
+        try:
+            with suppress(asyncio.CancelledError):
+                await task
+        except ServerError as e:
+            logging.error('Server error: %s', e)
+            raise
+
+        # Verify if the message was received correctly
+        assert received_messages, 'No messages were received'
+        assert received_messages[0] == (
+            'testuser',
+            'Hello, World!',
+        ), f'Unexpected message received: {received_messages[0]}'
+
+        # Log detailed messages received
+        for user, message in received_messages:
+            logging.info('Detailed Log: Message from %s - %s', user, message)
