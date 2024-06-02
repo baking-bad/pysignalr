@@ -19,6 +19,7 @@ namespace AspNetAuthExample
 
         public IConfiguration Configuration { get; }
 
+        // Method to configure the services for the application
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
@@ -32,7 +33,7 @@ namespace AspNetAuthExample
                         ValidateAudience = false,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your_secret_key_here"))
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("yoursecretkeyheretoSignalRserver"))
                     };
                     options.Events = new JwtBearerEvents
                     {
@@ -54,6 +55,7 @@ namespace AspNetAuthExample
             services.AddAuthorization();
         }
 
+        // Method to configure the HTTP request pipeline
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
