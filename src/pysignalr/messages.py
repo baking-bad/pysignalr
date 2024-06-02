@@ -10,6 +10,7 @@ class HandshakeMessage:
     """
     Base class for handshake messages.
     """
+
     def dump(self) -> dict[str, Any]:
         """
         Dumps the handshake message into a dictionary.
@@ -29,6 +30,7 @@ class HandshakeRequestMessage(HandshakeMessage):
         protocol (str): The protocol name.
         version (int): The protocol version.
     """
+
     protocol: str
     version: int
 
@@ -41,6 +43,7 @@ class HandshakeResponseMessage(HandshakeMessage):
     Attributes:
         error (str | None): The error message if the handshake failed.
     """
+
     error: str | None
 
 
@@ -58,6 +61,7 @@ class MessageType(IntEnum):
         close (int): Close message type.
         invocation_binding_failure (int): Invocation binding failure message type.
     """
+
     _ = 9999
     invocation = 1
     stream_item = 2
@@ -77,6 +81,7 @@ class Message:
     Methods:
         dump() -> dict[str, Any]: Dumps the message into a dictionary.
     """
+
     def __init_subclass__(cls, type_: MessageType) -> None:
         cls.type = type_  # type: ignore[attr-defined]
 
@@ -110,6 +115,7 @@ class ResponseMessage(Message, type_=MessageType._):
         error (str | None): The error message.
         result (Any | None): The result of the message.
     """
+
     error: str | None
     result: Any | None
 
@@ -123,6 +129,7 @@ class CancelInvocationMessage(Message, type_=MessageType.cancel_invocation):
         invocation_id (str): The ID of the invocation to cancel.
         headers (dict[str, Any] | None): Optional headers.
     """
+
     invocation_id: str
     headers: dict[str, Any] | None = None
 
@@ -137,6 +144,7 @@ class CloseMessage(Message, type_=MessageType.close):
         allow_reconnect (bool | None): Whether reconnection is allowed.
         headers (dict[str, Any] | None): Optional headers.
     """
+
     error: str | None = None
     allow_reconnect: bool | None = None
     headers: dict[str, Any] | None = None
@@ -151,6 +159,7 @@ class CompletionClientStreamMessage(Message, type_=MessageType.stream_item):
         invocation_id (str): The ID of the invocation.
         headers (dict[str, Any] | None): Optional headers.
     """
+
     invocation_id: str
     headers: dict[str, Any] | None = None
 
@@ -166,6 +175,7 @@ class CompletionMessage(Message, type_=MessageType.completion):
         error (str | None): The error message if the invocation failed.
         headers (dict[str, Any] | None): Optional headers.
     """
+
     invocation_id: str
     result: Any | None = None
     error: str | None = None
@@ -183,6 +193,7 @@ class InvocationMessage(Message, type_=MessageType.invocation):
         arguments: The arguments for the method invocation.
         headers (dict[str, Any] | None): Optional headers.
     """
+
     invocation_id: str
     target: str
     arguments: Any
@@ -200,6 +211,7 @@ class InvocationClientStreamMessage(Message, type_=MessageType.invocation):
         arguments: The arguments for the method invocation.
         headers (dict[str, Any] | None): Optional headers.
     """
+
     stream_ids: list[str]
     target: str
     arguments: Any
@@ -211,6 +223,7 @@ class PingMessage(Message, type_=MessageType.ping):
     """
     Ping message.
     """
+
     pass
 
 
@@ -225,6 +238,7 @@ class StreamInvocationMessage(Message, type_=MessageType.stream_invocation):
         arguments: The arguments for the method invocation.
         headers (dict[str, Any] | None): Optional headers.
     """
+
     invocation_id: str
     target: str
     arguments: Any
@@ -241,6 +255,7 @@ class StreamItemMessage(Message, type_=MessageType.stream_item):
         item: The stream item.
         headers (dict[str, Any] | None): Optional headers.
     """
+
     invocation_id: str
     item: Any
     headers: dict[str, Any] | None = None
@@ -253,6 +268,7 @@ class JSONMessage(Message, type_=MessageType._):
     Attributes:
         data (dict[str, Any]): The JSON data.
     """
+
     def __init__(self, data: dict[str, Any]) -> None:
         self.data = data
 

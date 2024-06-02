@@ -16,6 +16,7 @@ class NegotiationTimeout(Exception):
     """
     Exception raised when the connection URL generated during negotiation is no longer valid.
     """
+
     pass
 
 

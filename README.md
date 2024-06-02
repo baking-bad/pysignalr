@@ -12,13 +12,12 @@
 **pysignalr** is a modern, reliable, and async-ready client for the [SignalR protocol](https://docs.microsoft.com/en-us/aspnet/core/signalr/introduction?view=aspnetcore-5.0). This project started as an asyncio fork of mandrewcito's [signalrcore](https://github.com/mandrewcito/signalrcore) library and ended up as a complete rewrite.
 
 ## Table of Contents
+
 1. [Installation](#installation)
 2. [Basic Usage](#basic-usage)
 3. [Usage with Token Authentication](#usage-with-token-authentication)
 4. [API Reference](#api-reference)
-5. [Roadmap](#roadmap)
-6. [Contributing](#contributing)
-7. [License](#license)
+5. [License](#license)
 
 ## Installation
 

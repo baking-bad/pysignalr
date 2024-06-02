@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import suppress
+from typing import TYPE_CHECKING
 from typing import Any
 
 from pysignalr.client import SignalRClient
-from pysignalr.messages import CompletionMessage
+
+if TYPE_CHECKING:
+    from pysignalr.messages import CompletionMessage
 
 
 async def on_open() -> None:
