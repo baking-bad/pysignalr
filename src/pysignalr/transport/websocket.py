@@ -27,6 +27,22 @@ _logger = logging.getLogger('pysignalr.transport')
 
 
 class WebsocketTransport(Transport):
+    """
+    WebsocketTransport is a class that manages WebSocket connections, handles sending and receiving messages,
+    and manages connection states.
+
+    Attributes:
+        url (str): The URL of the WebSocket server.
+        protocol (Protocol): The protocol used for message encoding/decoding.
+        callback (Callable[[Message], Awaitable[None]]): The callback function to handle incoming messages.
+        headers (dict[str, str] | None): Optional HTTP headers to include in the WebSocket handshake.
+        skip_negotiation (bool): Whether to skip the negotiation step.
+        ping_interval (int): The interval for sending ping messages to keep the connection alive.
+        connection_timeout (int): The timeout for establishing a connection.
+        max_size (int | None): The maximum size for incoming messages.
+        access_token_factory (Callable[[], str] | None): A factory function to provide access tokens.
+    """
+
     def __init__(
         self,
         url: str,
@@ -37,8 +53,22 @@ class WebsocketTransport(Transport):
         ping_interval: int = DEFAULT_PING_INTERVAL,
         connection_timeout: int = DEFAULT_CONNECTION_TIMEOUT,
         max_size: int | None = DEFAULT_MAX_SIZE,
-        access_token_factory: Callable[[], str] | None = None,  # Add token factory
+        access_token_factory: Callable[[], str] | None = None,
     ):
+        """
+        Initializes the WebSocket transport with the provided parameters.
+
+        Args:
+            url (str): The URL of the WebSocket server.
+            protocol (Protocol): The protocol used for message encoding/decoding.
+            callback (Callable[[Message], Awaitable[None]]): The callback function to handle incoming messages.
+            headers (dict[str, str] | None): Optional HTTP headers to include in the WebSocket handshake.
+            skip_negotiation (bool): Whether to skip the negotiation step.
+            ping_interval (int): The interval for sending ping messages to keep the connection alive.
+            connection_timeout (int): The timeout for establishing a connection.
+            max_size (int | None): The maximum size for incoming messages.
+            access_token_factory (Callable[[], str] | None): A factory function to provide access tokens.
+        """
         super().__init__()
         self._url = url
         self._protocol = protocol
@@ -48,7 +78,7 @@ class WebsocketTransport(Transport):
         self._ping_interval = ping_interval
         self._connection_timeout = connection_timeout
         self._max_size = max_size
-        self._access_token_factory = access_token_factory  # Store token factory
+        self._access_token_factory = access_token_factory
 
         self._state = ConnectionState.disconnected
         self._connected = asyncio.Event()
@@ -57,25 +87,55 @@ class WebsocketTransport(Transport):
         self._close_callback: Callable[[], Awaitable[None]] | None = None
 
     def on_open(self, callback: Callable[[], Awaitable[None]]) -> None:
+        """
+        Registers a callback function to be called when the connection is opened.
+
+        Args:
+            callback (Callable[[], Awaitable[None]]): The callback function.
+        """
         self._open_callback = callback
 
     def on_close(self, callback: Callable[[], Awaitable[None]]) -> None:
+        """
+        Registers a callback function to be called when the connection is closed.
+
+        Args:
+            callback (Callable[[], Awaitable[None]]): The callback function.
+        """
         self._close_callback = callback
 
     def on_error(self, callback: Callable[[CompletionMessage], Awaitable[None]]) -> None:
+        """
+        Registers a callback function to be called when an error occurs.
+
+        Args:
+            callback (Callable[[CompletionMessage], Awaitable[None]]): The callback function.
+        """
         self._error_callback = callback
 
     async def run(self) -> None:
+        """
+        Runs the WebSocket transport, managing the connection lifecycle.
+        """
         while True:
             with suppress(NegotiationTimeout):
                 await self._loop()
             await self._set_state(ConnectionState.disconnected)
 
     async def send(self, message: Message) -> None:
+        """
+        Sends a message over the WebSocket connection.
+
+        Args:
+            message (Message): The message to be sent.
+        """
         conn = await self._get_connection()
         await conn.send(self._protocol.encode(message))
 
     async def _loop(self) -> None:
+        """
+        Manages the connection lifecycle, including reconnection logic.
+        """
         await self._set_state(ConnectionState.connecting)
 
         if not self._skip_negotiation:
@@ -109,6 +169,12 @@ class WebsocketTransport(Transport):
                 await self._set_state(ConnectionState.reconnecting)
 
     async def _set_state(self, state: ConnectionState) -> None:
+        """
+        Sets the connection state and triggers appropriate callbacks.
+
+        Args:
+            state (ConnectionState): The new connection state.
+        """
         if state == self._state:
             return
 
@@ -141,6 +207,15 @@ class WebsocketTransport(Transport):
         self._state = state
 
     async def _get_connection(self) -> WebSocketClientProtocol:
+        """
+        Gets the active WebSocket connection, ensuring it is open.
+
+        Returns:
+            WebSocketClientProtocol: The active WebSocket connection.
+
+        Raises:
+            RuntimeError: If the connection is closed or was never run.
+        """
         try:
             await asyncio.wait_for(self._connected.wait(), self._connection_timeout)
         except asyncio.TimeoutError as e:
@@ -150,16 +225,34 @@ class WebsocketTransport(Transport):
         return self._ws
 
     async def _process(self, conn: WebSocketClientProtocol) -> None:
+        """
+        Processes incoming messages from the WebSocket connection.
+
+        Args:
+            conn (WebSocketClientProtocol): The WebSocket connection.
+        """
         while True:
             raw_message = await conn.recv()
             await self._on_raw_message(raw_message)
 
     async def _keepalive(self, conn: WebSocketClientProtocol) -> None:
+        """
+        Sends periodic ping messages to keep the connection alive.
+
+        Args:
+            conn (WebSocketClientProtocol): The WebSocket connection.
+        """
         while True:
             await asyncio.sleep(10)
             await conn.send(self._protocol.encode(PingMessage()))
 
     async def _handshake(self, conn: WebSocketClientProtocol) -> None:
+        """
+        Performs the WebSocket handshake with the server.
+
+        Args:
+            conn (WebSocketClientProtocol): The WebSocket connection.
+        """
         _logger.info('Sending handshake to server')
         token = self._access_token_factory() if self._access_token_factory else None
         if token:
@@ -176,6 +269,9 @@ class WebsocketTransport(Transport):
             await self._on_message(message)
 
     async def _negotiate(self) -> None:
+        """
+        Performs the negotiation step to establish the connection.
+        """
         negotiate_url = get_negotiate_url(self._url)
         _logger.info('Performing negotiation, URL: `%s`', negotiate_url)
 
@@ -206,16 +302,45 @@ class WebsocketTransport(Transport):
             raise exceptions.ServerError(str(data))
 
     async def _on_raw_message(self, raw_message: str | bytes) -> None:
+        """
+        Handles raw incoming messages, decoding them into protocol-specific messages.
+
+        Args:
+            raw_message (str | bytes): The raw incoming message.
+        """
         for message in self._protocol.decode(raw_message):
             await self._on_message(message)
 
     async def _on_message(self, message: Message) -> None:
+        """
+        Handles decoded messages, passing them to the registered callback.
+
+        Args:
+            message (Message): The decoded message.
+        """
         await self._callback(message)
 
 
 class BaseWebsocketTransport(WebsocketTransport):
+    """
+    BaseWebsocketTransport is a subclass of WebsocketTransport that disables keepalive and handshake 
+    for simplified use cases.
+    """
+
     async def _keepalive(self, conn: WebSocketClientProtocol) -> None:
+        """
+        Disabled keepalive method.
+
+        Args:
+            conn (WebSocketClientProtocol): The WebSocket connection.
+        """
         return
 
     async def _handshake(self, conn: WebSocketClientProtocol) -> None:
+        """
+        Disabled handshake method.
+
+        Args:
+            conn (WebSocketClientProtocol): The WebSocket connection.
+        """
         return

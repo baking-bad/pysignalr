@@ -2,26 +2,30 @@ from __future__ import annotations
 
 # TODO: Refactor this module
 from collections import deque
-from typing import Any
-from typing import Iterable
-from typing import Sequence
-from typing import cast
+from typing import (
+    Any,
+    Iterable,
+    Sequence,
+    cast
+)
 
 import msgpack  # type: ignore[import-untyped]
 import orjson
 
-from pysignalr.messages import CancelInvocationMessage
-from pysignalr.messages import CloseMessage
-from pysignalr.messages import CompletionMessage
-from pysignalr.messages import HandshakeRequestMessage
-from pysignalr.messages import HandshakeResponseMessage
-from pysignalr.messages import InvocationClientStreamMessage
-from pysignalr.messages import InvocationMessage
-from pysignalr.messages import Message
-from pysignalr.messages import MessageType
-from pysignalr.messages import PingMessage
-from pysignalr.messages import StreamInvocationMessage
-from pysignalr.messages import StreamItemMessage
+from pysignalr.messages import ( 
+    CancelInvocationMessage,
+    CloseMessage,
+    CompletionMessage,
+    HandshakeRequestMessage,
+    HandshakeResponseMessage,
+    InvocationClientStreamMessage,
+    InvocationMessage,
+    Message,
+    MessageType,
+    PingMessage,
+    StreamInvocationMessage,
+    StreamItemMessage
+)
 from pysignalr.protocol.abstract import Protocol
 
 _attribute_priority = (
@@ -40,7 +44,16 @@ _attribute_priority = (
 
 
 class MessagepackProtocol(Protocol):
+    """
+    Class for handling MessagePack protocols.
+
+    This class provides methods for encoding and decoding messages using the MessagePack protocol.
+    """
+
     def __init__(self) -> None:
+        """
+        Initializes a MessagepackProtocol object.
+        """
         super().__init__(
             protocol='messagepack',
             version=1,
@@ -48,6 +61,15 @@ class MessagepackProtocol(Protocol):
         )
 
     def decode(self, raw_message: str | bytes) -> list[Message]:
+        """
+        Decodes a raw message into a list of Message objects.
+
+        Args:
+            raw_message (str | bytes): The raw message to be decoded.
+
+        Returns:
+            list[Message]: A list of Message objects.
+        """
         messages: list[Message] = []
         offset = 0
         while offset < len(raw_message):
@@ -59,6 +81,15 @@ class MessagepackProtocol(Protocol):
         return messages
 
     def encode(self, message: Message | HandshakeRequestMessage) -> bytes:
+        """
+        Encodes a message into a raw representation.
+
+        Args:
+            message (Message | HandshakeRequestMessage): The message to be encoded.
+
+        Returns:
+            bytes: The raw representation of the message.
+        """
         raw_message: deque[Any] = deque()
 
         for attr in _attribute_priority:
@@ -73,6 +104,15 @@ class MessagepackProtocol(Protocol):
         return varint_length + encoded_message
 
     def decode_handshake(self, raw_message: str | bytes) -> tuple[HandshakeResponseMessage, Iterable[Message]]:
+        """
+        Decodes a handshake message.
+
+        Args:
+            raw_message (str | bytes): The raw handshake message to be decoded.
+
+        Returns:
+            tuple[HandshakeResponseMessage, Iterable[Message]]: A tuple containing a HandshakeResponseMessage and a sequence of Message objects.
+        """
         if isinstance(raw_message, str):
             raw_message = raw_message.encode()
 
@@ -84,6 +124,15 @@ class MessagepackProtocol(Protocol):
 
     @staticmethod
     def parse_message(seq_message: Sequence[Any]) -> Message:
+        """
+        Parses a sequence into a Message object.
+
+        Args:
+            seq_message (Sequence[Any]): The sequence to be parsed.
+
+        Returns:
+            Message: The resulting Message object.
+        """
         # {} {'error'}
         # [1, Headers, InvocationId, Target, [Arguments], [StreamIds]]
         # [2, Headers, InvocationId, Item]
@@ -124,6 +173,15 @@ class MessagepackProtocol(Protocol):
             raise NotImplementedError
 
     def _to_varint(self, value: int) -> bytes:
+        """
+        Converts an integer into a variable-length integer.
+
+        Args:
+            value (int): The integer to be converted.
+
+        Returns:
+            bytes: The variable-length integer.
+        """
         buffer = b''
 
         while True:

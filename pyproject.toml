@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "pysignalr"
-version = "1.1.0"  # Atualize a versão para refletir as novas mudanças
+version = "1.1.0"
 description = "Modern, reliable and async-ready client for SignalR protocol"
 keywords = ["signalr", "asp", "client", "asyncio", "json", "messagepack", "websockets"]
 classifiers = [
@@ -67,6 +67,11 @@ ignore = [
 target-version = "py38"
 
 [tool.ruff.lint]
+ignore = [
+    "E402",  # module level import not at top of file
+    "E501",  # line too long
+    "TCH001", # breaks our runtime Pydantic magic
+]
 extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RUF", "TCH", "UP"]
 flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
 isort = { force-single-line = true, known-first-party = ["pysignalr"] }

@@ -9,9 +9,26 @@
 [![GitHub issues](https://img.shields.io/github/issues/baking-bad/pysignalr?color=2c2c2c)](https://github.com/baking-bad/pysignalr/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/baking-bad/pysignalr?color=2c2c2c)](https://github.com/baking-bad/pysignalr/pulls)
 
-**pysignalr** is a modern, reliable, and async-ready client for [SignalR protocol](https://docs.microsoft.com/en-us/aspnet/core/signalr/introduction?view=aspnetcore-5.0). This project started as an asyncio fork of mandrewcito's [signalrcore](https://github.com/mandrewcito/signalrcore) library and ended up as a complete rewrite.
+**pysignalr** is a modern, reliable, and async-ready client for the [SignalR protocol](https://docs.microsoft.com/en-us/aspnet/core/signalr/introduction?view=aspnetcore-5.0). This project started as an asyncio fork of mandrewcito's [signalrcore](https://github.com/mandrewcito/signalrcore) library and ended up as a complete rewrite.
 
-## Usage
+## Table of Contents
+1. [Installation](#installation)
+2. [Basic Usage](#basic-usage)
+3. [Usage with Token Authentication](#usage-with-token-authentication)
+4. [API Reference](#api-reference)
+5. [Roadmap](#roadmap)
+6. [Contributing](#contributing)
+7. [License](#license)
+
+## Installation
+
+To install `pysignalr`, simply use pip:
+
+```bash
+pip install pysignalr
+```
+
+## Basic Usage
 
 Let's connect to [TzKT](https://tzkt.io/), an API and block explorer of Tezos blockchain, and subscribe to all operations:
 
@@ -62,7 +79,7 @@ with suppress(KeyboardInterrupt, asyncio.CancelledError):
 
 ## Usage with Token Authentication
 
-Let's connect to the SignalR server using token authentication:
+To connect to the SignalR server using token authentication:
 
 ```python
 import asyncio
@@ -72,27 +89,21 @@ from typing import Any, Dict, List
 from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage
 
-
 async def on_open() -> None:
     print('Connected to the server')
-
 
 async def on_close() -> None:
     print('Disconnected from the server')
 
-
 async def on_message(message: List[Dict[str, Any]]) -> None:
     print(f'Received message: {message}')
-
 
 async def on_error(message: CompletionMessage) -> None:
     print(f'Received error: {message.error}')
 
-
 def token_factory() -> str:
     # Replace with logic to fetch or generate the token
     return "your_access_token_here"
-
 
 async def main() -> None:
     client = SignalRClient(
@@ -111,13 +122,46 @@ async def main() -> None:
         client.send('SubscribeToOperations', [{}]),
     )
 
-
 with suppress(KeyboardInterrupt, asyncio.CancelledError):
     asyncio.run(main())
 ```
 
+## API Reference
+
+### `SignalRClient`
+
+#### Parameters
+
+- `url` (str): The SignalR server URL.
+- `access_token_factory` (Callable[[], str], optional): A function that returns the access token.
+- `headers` (Dict[str, str], optional): Additional headers to include in the WebSocket handshake.
+
+#### Methods
+
+- `on_open(callback: Callable[[], Awaitable[None]])`: Set the callback for connection open event.
+- `on_close(callback: Callable[[], Awaitable[None]])`: Set the callback for connection close event.
+- `on_error(callback: Callable[[CompletionMessage], Awaitable[None]])`: Set the callback for error events.
+- `on(event: str, callback: Callable[[List[Dict[str, Any]]], Awaitable[None]])`: Set the callback for a specific event.
+- `send(method: str, args: List[Any])`: Send a message to the server.
+
+### `CompletionMessage`
+
+A message received from the server upon completion of a method invocation.
+
+#### Attributes
+
+- `error` (str): The error message, if any.
+
 ## Roadmap
 
-- [ ] More documentation, both internal and user.
-- [ ] Integration tests with containerized ASP hello-world server.
-- [ ] Ensure that authentication works correctly.
+- [x] More documentation, both internal and user.
+- [x] Integration tests with containerized ASP hello-world server.
+- [x] Ensure that authentication works correctly.
+
+## Contributing
+
+Contributions are welcome! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to get involved.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
