@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from collections import defaultdict
 from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import AsyncIterator
 from typing import Awaitable
@@ -20,13 +21,15 @@ from pysignalr.messages import MessageType
 from pysignalr.messages import PingMessage
 from pysignalr.messages import StreamInvocationMessage
 from pysignalr.messages import StreamItemMessage
-from pysignalr.protocol.abstract import Protocol
 from pysignalr.protocol.json import JSONProtocol
-from pysignalr.transport.abstract import Transport
 from pysignalr.transport.websocket import DEFAULT_CONNECTION_TIMEOUT
 from pysignalr.transport.websocket import DEFAULT_MAX_SIZE
 from pysignalr.transport.websocket import DEFAULT_PING_INTERVAL
 from pysignalr.transport.websocket import WebsocketTransport
+
+if TYPE_CHECKING:
+    from pysignalr.protocol.abstract import Protocol
+    from pysignalr.transport.abstract import Transport
 
 EmptyCallback = Callable[[], Awaitable[None]]
 AnyCallback = Callable[[Any], Awaitable[None]]

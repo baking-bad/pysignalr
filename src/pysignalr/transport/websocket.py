@@ -4,6 +4,7 @@ import asyncio
 import logging
 from contextlib import suppress
 from http import HTTPStatus
+from typing import TYPE_CHECKING
 from typing import Awaitable
 from typing import Callable
 
@@ -20,12 +21,14 @@ from pysignalr import NegotiationTimeout
 from pysignalr.messages import CompletionMessage
 from pysignalr.messages import Message
 from pysignalr.messages import PingMessage
-from pysignalr.protocol.abstract import Protocol
 from pysignalr.transport.abstract import ConnectionState
 from pysignalr.transport.abstract import Transport
 from pysignalr.utils import get_connection_url
 from pysignalr.utils import get_negotiate_url
 from pysignalr.utils import replace_scheme
+
+if TYPE_CHECKING:
+    from pysignalr.protocol.abstract import Protocol
 
 DEFAULT_MAX_SIZE = 2**20  # 1 MB
 DEFAULT_PING_INTERVAL = 10
