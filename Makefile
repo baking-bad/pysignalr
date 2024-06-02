@@ -10,8 +10,8 @@ SRC = src tests example.py example_with_token.py
 help:           ## Show this help (default)
 	@grep -F -h "##" $(MAKEFILE_LIST) | grep -F -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
-all:            ## Run a whole CI pipeline: formatters, linters, tests and docs
-	make lint test docs
+all:            ## Run a whole CI pipeline: formatters, linters, tests
+	make lint test
 
 lint:           ## Lint with all tools
 	make black ruff mypy

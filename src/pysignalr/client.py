@@ -3,31 +3,30 @@ from __future__ import annotations
 import uuid
 from collections import defaultdict
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, Awaitable, Callable
+from typing import Any
+from typing import AsyncIterator
+from typing import Awaitable
+from typing import Callable
 
 from pysignalr.exceptions import ServerError
-from pysignalr.messages import (
-    CancelInvocationMessage,
-    CloseMessage,
-    CompletionClientStreamMessage,
-    CompletionMessage,
-    InvocationClientStreamMessage,
-    InvocationMessage,
-    Message,
-    MessageType,
-    PingMessage,
-    StreamInvocationMessage,
-    StreamItemMessage,
-)
+from pysignalr.messages import CancelInvocationMessage
+from pysignalr.messages import CloseMessage
+from pysignalr.messages import CompletionClientStreamMessage
+from pysignalr.messages import CompletionMessage
+from pysignalr.messages import InvocationClientStreamMessage
+from pysignalr.messages import InvocationMessage
+from pysignalr.messages import Message
+from pysignalr.messages import MessageType
+from pysignalr.messages import PingMessage
+from pysignalr.messages import StreamInvocationMessage
+from pysignalr.messages import StreamItemMessage
 from pysignalr.protocol.abstract import Protocol
 from pysignalr.protocol.json import JSONProtocol
 from pysignalr.transport.abstract import Transport
-from pysignalr.transport.websocket import (
-    DEFAULT_CONNECTION_TIMEOUT,
-    DEFAULT_MAX_SIZE,
-    DEFAULT_PING_INTERVAL,
-    WebsocketTransport,
-)
+from pysignalr.transport.websocket import DEFAULT_CONNECTION_TIMEOUT
+from pysignalr.transport.websocket import DEFAULT_MAX_SIZE
+from pysignalr.transport.websocket import DEFAULT_PING_INTERVAL
+from pysignalr.transport.websocket import WebsocketTransport
 
 EmptyCallback = Callable[[], Awaitable[None]]
 AnyCallback = Callable[[Any], Awaitable[None]]
@@ -232,7 +231,7 @@ class SignalRClient:
         Args:
             message (Message): The incoming message.
         """
-        if message.type == MessageType.invocation_binding_failure:
+        if message.type == MessageType.invocation_binding_failure:  # type: ignore[attr-defined]
             raise ServerError(str(message))
 
         elif isinstance(message, PingMessage):
@@ -306,7 +305,7 @@ class SignalRClient:
         """
         _, _, callback = self._stream_handlers[message.invocation_id]
         if callback:
-            await callback(message)
+            await callback(message)  # type: ignore[arg-type]
 
     async def _on_close_message(self, message: CloseMessage) -> None:
         """

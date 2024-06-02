@@ -8,6 +8,7 @@ class HubError(Exception):
     """
     Base class for all Hub-related errors.
     """
+
     pass
 
 
@@ -16,6 +17,7 @@ class AuthorizationError(HubError):
     """
     Exception raised for authorization errors.
     """
+
     pass
 
 
@@ -27,6 +29,7 @@ class ConnectionError(HubError):
     Attributes:
         status (int): The HTTP status code related to the connection error.
     """
+
     status: int
 
 
@@ -38,4 +41,5 @@ class ServerError(HubError):
     Attributes:
         message (str | None): The error message from the server.
     """
+
     message: str | None

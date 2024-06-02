@@ -6,21 +6,19 @@ from typing import Iterable
 
 import orjson
 
-from pysignalr.messages import (
-    CancelInvocationMessage,  # 5
-    CloseMessage,  # 7
-    CompletionMessage,  # 3
-    HandshakeMessage,
-    HandshakeRequestMessage,
-    HandshakeResponseMessage,
-    InvocationMessage,  # 1
-    JSONMessage,  # virtual
-    Message,
-    MessageType,
-    PingMessage,  # 6
-    StreamInvocationMessage,  # 4
-    StreamItemMessage  # 2
-)
+from pysignalr.messages import CancelInvocationMessage  # 5
+from pysignalr.messages import CloseMessage  # 7
+from pysignalr.messages import CompletionMessage  # 3
+from pysignalr.messages import HandshakeMessage
+from pysignalr.messages import HandshakeRequestMessage
+from pysignalr.messages import HandshakeResponseMessage
+from pysignalr.messages import InvocationMessage  # 1
+from pysignalr.messages import JSONMessage  # virtual
+from pysignalr.messages import Message
+from pysignalr.messages import MessageType
+from pysignalr.messages import PingMessage  # 6
+from pysignalr.messages import StreamInvocationMessage  # 4
+from pysignalr.messages import StreamItemMessage  # 2
 from pysignalr.protocol.abstract import Protocol
 
 
@@ -28,7 +26,7 @@ class MessageEncoder(JSONEncoder):
     """
     Custom JSONEncoder for encoding Message and MessageType objects.
 
-    This class is a subclass of JSONEncoder and overrides the default() method 
+    This class is a subclass of JSONEncoder and overrides the default() method
     to provide custom serialization for Message and MessageType objects.
     """
 
@@ -54,7 +52,7 @@ class BaseJSONProtocol(Protocol):
     """
     Base class for JSON protocols.
 
-    This class provides the basic structure for JSON protocols and defines 
+    This class provides the basic structure for JSON protocols and defines
     some abstract methods that must be implemented by subclasses.
     """
 

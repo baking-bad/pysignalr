@@ -26,14 +26,14 @@ async def on_error(message: CompletionMessage) -> None:
 
 def token_factory() -> str:
     # Replace with logic to fetch or generate the token
-    return "your_access_token_here"
+    return 'your_access_token_here'
 
 
 async def main() -> None:
     client = SignalRClient(
         url='https://api.tzkt.io/v1/ws',
         access_token_factory=token_factory,
-        headers={"mycustomheader": "mycustomheadervalue"},
+        headers={'mycustomheader': 'mycustomheadervalue'},
     )
 
     client.on_open(on_open)

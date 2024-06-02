@@ -1,6 +1,8 @@
 from unittest import TestCase
 
-from pysignalr.utils import get_connection_url, get_negotiate_url, replace_scheme
+from pysignalr.utils import get_connection_url
+from pysignalr.utils import get_negotiate_url
+from pysignalr.utils import replace_scheme
 
 
 class UtilsTest(TestCase):
