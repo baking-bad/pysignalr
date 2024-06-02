@@ -12,11 +12,14 @@
 !**/pdm.lock
 !**/README.md
 !**/.keep
+!**/docker-compose.yml
+!**/AspNetAuthExample/**
 
 # Add Python code
 !**/*.py
 **/.*_cache
 **/__pycache__
+!pytest.ini
 
 # Add configs and scripts (but not env!)
 !**/*.graphql
@@ -30,3 +33,4 @@
 # Docs
 !docs/**
 docs/_build
+!*.md

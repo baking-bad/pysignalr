@@ -6,24 +6,42 @@ from typing import Iterable
 
 import orjson
 
-from pysignalr.messages import CancelInvocationMessage  # 5
-from pysignalr.messages import CloseMessage  # 7
-from pysignalr.messages import CompletionMessage  # 3
-from pysignalr.messages import HandshakeMessage
-from pysignalr.messages import HandshakeRequestMessage
-from pysignalr.messages import HandshakeResponseMessage
-from pysignalr.messages import InvocationMessage  # 1
-from pysignalr.messages import JSONMessage  # virtual
-from pysignalr.messages import Message
-from pysignalr.messages import MessageType
-from pysignalr.messages import PingMessage  # 6
-from pysignalr.messages import StreamInvocationMessage  # 4
-from pysignalr.messages import StreamItemMessage  # 2
+from pysignalr.messages import (
+    CancelInvocationMessage,  # 5
+    CloseMessage,  # 7
+    CompletionMessage,  # 3
+    HandshakeMessage,
+    HandshakeRequestMessage,
+    HandshakeResponseMessage,
+    InvocationMessage,  # 1
+    JSONMessage,  # virtual
+    Message,
+    MessageType,
+    PingMessage,  # 6
+    StreamInvocationMessage,  # 4
+    StreamItemMessage  # 2
+)
 from pysignalr.protocol.abstract import Protocol
 
 
 class MessageEncoder(JSONEncoder):
+    """
+    Custom JSONEncoder for encoding Message and MessageType objects.
+
+    This class is a subclass of JSONEncoder and overrides the default() method 
+    to provide custom serialization for Message and MessageType objects.
+    """
+
     def default(self, obj: Message | MessageType) -> str | int | dict[str, Any]:
+        """
+        Overrides the default() method for custom serialization.
+
+        Args:
+            obj (Message | MessageType): The object to be serialized.
+
+        Returns:
+            str | int | dict[str, Any]: The serialized object.
+        """
         if isinstance(obj, MessageType):
             return obj.value
         return obj.dump()
@@ -33,21 +51,61 @@ message_encoder = MessageEncoder()
 
 
 class BaseJSONProtocol(Protocol):
+    """
+    Base class for JSON protocols.
+
+    This class provides the basic structure for JSON protocols and defines 
+    some abstract methods that must be implemented by subclasses.
+    """
+
     def __init__(self) -> None:
         pass
 
     def decode(self, raw_message: str | bytes) -> tuple[JSONMessage]:
+        """
+        Decodes a raw message into a JSONMessage object.
+
+        Args:
+            raw_message (str | bytes): The raw message to be decoded.
+
+        Returns:
+            tuple[JSONMessage]: A tuple containing a single JSONMessage object.
+        """
         json_message = orjson.loads(raw_message)
         return (JSONMessage(data=json_message),)
 
     def encode(self, message: Message | HandshakeRequestMessage) -> str | bytes:
+        """
+        Encodes a message into a raw representation.
+
+        Args:
+            message (Message | HandshakeRequestMessage): The message to be encoded.
+
+        Returns:
+            str | bytes: The raw representation of the message.
+        """
         return orjson.dumps(message.dump())
 
     def decode_handshake(self, raw_message: str | bytes) -> tuple[HandshakeResponseMessage, Iterable[Message]]:
+        """
+        Decodes a handshake message.
+
+        Args:
+            raw_message (str | bytes): The raw handshake message to be decoded.
+
+        Returns:
+            tuple[HandshakeResponseMessage, Iterable[Message]]: A tuple containing a HandshakeResponseMessage and a sequence of Message objects.
+        """
         raise NotImplementedError
 
 
 class JSONProtocol(Protocol):
+    """
+    Class for handling JSON protocols.
+
+    This class provides methods for encoding and decoding messages using the JSON protocol.
+    """
+
     def __init__(self) -> None:
         super().__init__(
             protocol='json',
@@ -56,6 +114,15 @@ class JSONProtocol(Protocol):
         )
 
     def decode(self, raw_message: str | bytes) -> list[Message]:
+        """
+        Decodes a raw message into a list of Message objects.
+
+        Args:
+            raw_message (str | bytes): The raw message to be decoded.
+
+        Returns:
+            list[Message]: A list of Message objects.
+        """
         if isinstance(raw_message, bytes):
             raw_message = raw_message.decode()
 
@@ -73,13 +140,30 @@ class JSONProtocol(Protocol):
         return messages
 
     def encode(self, message: Message | HandshakeMessage) -> str:
+        """
+        Encodes a message into a raw representation.
+
+        Args:
+            message (Message | HandshakeMessage): The message to be encoded.
+
+        Returns:
+            str: The raw representation of the message.
+        """
         return message_encoder.encode(message) + self.record_separator
 
     def decode_handshake(self, raw_message: str | bytes) -> tuple[HandshakeResponseMessage, Iterable[Message]]:
+        """
+        Decodes a handshake message.
+
+        Args:
+            raw_message (str | bytes): The raw handshake message to be decoded.
+
+        Returns:
+            tuple[HandshakeResponseMessage, Iterable[Message]]: A tuple containing a HandshakeResponseMessage and a sequence of Message objects.
+        """
         if isinstance(raw_message, bytes):
             raw_message = raw_message.decode()
 
-        # TODO: Cleanup
         messages = raw_message.split(self.record_separator)
         messages = list(filter(bool, messages))
         data = orjson.loads(messages[0])
@@ -91,6 +175,15 @@ class JSONProtocol(Protocol):
 
     @staticmethod
     def parse_message(dict_message: dict[str, Any]) -> Message:
+        """
+        Parses a dictionary into a Message object.
+
+        Args:
+            dict_message (dict[str, Any]): The dictionary to be parsed.
+
+        Returns:
+            Message: The resulting Message object.
+        """
         message_type = MessageType(dict_message.pop('type', 'close'))
 
         if message_type is MessageType.invocation:

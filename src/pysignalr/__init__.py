@@ -1,5 +1,6 @@
 import importlib.metadata
 
+# Get the version of the 'pysignalr' package
 __version__ = importlib.metadata.version('pysignalr')
 
 import asyncio
@@ -12,21 +13,37 @@ from websockets.exceptions import InvalidStatusCode
 
 
 class NegotiationTimeout(Exception):
-    """Connection URL generated during negotiation is no longer valid"""
-
+    """
+    Exception raised when the connection URL generated during negotiation is no longer valid.
+    """
     pass
 
 
 async def __aiter__(
     self: websockets.legacy.client.Connect,
 ) -> AsyncIterator[websockets.legacy.client.WebSocketClientProtocol]:
+    """
+    Asynchronous iterator for the Connect object.
+
+    This function attempts to establish a connection and yields the protocol when successful.
+    If the connection fails, it retries with an exponential backoff.
+
+    Args:
+        self (websockets.legacy.client.Connect): The Connect object.
+
+    Yields:
+        websockets.legacy.client.WebSocketClientProtocol: The WebSocket protocol.
+
+    Raises:
+        NegotiationTimeout: If the connection URL is no longer valid during negotiation.
+    """
     backoff_delay = self.BACKOFF_MIN
     while True:
         try:
             async with self as protocol:
                 yield protocol
 
-        # NOTE: The following block was added to the original code to handle expired connection URLs.
+        # Handle expired connection URLs by raising a NegotiationTimeout exception.
         except InvalidStatusCode as e:
             if e.status_code == HTTPStatus.NOT_FOUND:
                 raise NegotiationTimeout from e
@@ -56,8 +73,9 @@ async def __aiter__(
             backoff_delay = min(backoff_delay, self.BACKOFF_MAX)
             continue
         else:
-            # Connection succeeded - reset backoff delay
+            # Connection succeeded - reset backoff delay.
             backoff_delay = self.BACKOFF_MIN
 
 
+# Override the __aiter__ method of the Connect class
 websockets.legacy.client.Connect.__aiter__ = __aiter__  # type: ignore[method-assign]

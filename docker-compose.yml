@@ -1,0 +1,72 @@
+services:
+  aspnet-server:
+    build:
+      context: ./AspNetAuthExample
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+    networks:
+      - app-network
+
+  test_runner:
+    image: python:3.10
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app/src
+    depends_on:
+      - aspnet-server
+    networks:
+      - app-network
+    entrypoint: ["sh", "-c"]
+    command: >
+      "pip install --upgrade pip &&
+      pip install pytest pytest-cov pytest-asyncio requests &&
+      pip install -e . &&
+      pytest --cov-report=term-missing --cov=pysignalr --cov-report=xml -s -v tests"
+
+  formatter:
+    image: python:3.10
+    volumes:
+      - .:/app
+    working_dir: /app
+    entrypoint: ["sh", "-c"]
+    command: >
+      pip install black &&
+      black src tests example.py
+
+  linter:
+    image: python:3.10
+    volumes:
+      - .:/app
+    working_dir: /app
+    entrypoint: ["sh", "-c"]
+    command: >
+      pip install ruff mypy &&
+      ruff check --fix --unsafe-fixes src tests example.py &&
+      mypy --strict src tests example.py
+
+  docs:
+    image: python:3.10
+    volumes:
+      - .:/app
+    working_dir: /app
+    entrypoint: ["sh", "-c"]
+    command: >
+      pip install sphinx &&
+      sphinx-build -b html docs/source docs/build
+
+  coverage:
+    image: python:3.10
+    volumes:
+      - .:/app
+    working_dir: /app
+    entrypoint: ["sh", "-c"]
+    command: >
+      pip install diff-cover &&
+      diff-cover --compare-branch `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'` coverage.xml
+
+networks:
+  app-network:
