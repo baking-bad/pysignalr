@@ -25,6 +25,7 @@ homepage = "https://github.com/baking-bad/pysignalr"
 authors = [
     "Lev Gorodetskii <pysignalr@drsr.io>",
     "mandrewcito <anbaalo@gmail.com>",
+    "Caio Barbieri <caio@lombello.com",
 ]
 maintainers = [
     "Lev Gorodetskii <pysignalr@drsr.io>",
