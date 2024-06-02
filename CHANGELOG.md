@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [1.1.0] - 2024-06-03
+
+### Added
+
+- Added `access_token_factory` argument to allow custom token generation. ([@caiolombello](https://github.com/caiolombello))
+- Added example ASP server with role-based JWT authentication for testing purposes. ([@caiolombello](https://github.com/caiolombello))
+
+### Other
+
+- Significantly improved user and internal documentation, test coverage. ([@caiolombello](https://github.com/caiolombello))
+- Loosened version constraints for dependencies.
+
 ## [1.0.0] - 2024-03-07
 
 ### Added
@@ -60,9 +72,10 @@ Initial release.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/1.0.0...HEAD
-[1.0.0]: https://github.com/dipdup-io/dipdup/compare/0.2.0...1.0.0
-[0.2.0]: https://github.com/dipdup-io/dipdup/compare/0.1.2...0.2.0
-[0.1.2]: https://github.com/dipdup-io/dipdup/compare/0.1.1...0.1.2
-[0.1.1]: https://github.com/dipdup-io/dipdup/compare/0.1.0...0.1.1
-[0.1.0]: https://github.com/dipdup-io/dipdup/releases/tag/0.1.0
+[Unreleased]: https://github.com/baking-bad/pysignalr/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/baking-bad/pysignalr/compare/1.0.0...1.1.0
+[1.0.0]: https://github.com/baking-bad/pysignalr/compare/0.2.0...1.0.0
+[0.2.0]: https://github.com/baking-bad/pysignalr/compare/0.1.2...0.2.0
+[0.1.2]: https://github.com/baking-bad/pysignalr/compare/0.1.1...0.1.2
+[0.1.1]: https://github.com/baking-bad/pysignalr/compare/0.1.0...0.1.1
+[0.1.0]: https://github.com/baking-bad/pysignalr/releases/tag/0.1.0
