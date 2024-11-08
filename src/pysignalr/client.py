@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+import ssl
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator, Awaitable, Callable
@@ -100,11 +101,13 @@ class SignalRClient:
         connection_timeout: int = DEFAULT_CONNECTION_TIMEOUT,
         max_size: int | None = DEFAULT_MAX_SIZE,
         access_token_factory: Callable[[], str] | None = None,
+        ssl: ssl.SSLContext | None = None,
     ) -> None:
         self._url = url
         self._protocol = protocol or JSONProtocol()
         self._headers = headers or {}
         self._access_token_factory = access_token_factory
+        self._ssl = ssl
 
         self._message_handlers: defaultdict[str, list[MessageCallback | None]] = defaultdict(list)
         self._stream_handlers: dict[
@@ -121,6 +124,7 @@ class SignalRClient:
             connection_timeout=connection_timeout,
             max_size=max_size,
             access_token_factory=access_token_factory,
+            ssl=ssl,
         )
         self._error_callback: CompletionMessageCallback | None = None
 
