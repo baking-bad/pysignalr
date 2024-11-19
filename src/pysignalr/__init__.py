@@ -43,9 +43,7 @@ async def __aiter__(
                 yield protocol
 
         # Handle expired connection URLs by raising a NegotiationTimeout exception.
-        except InvalidStatusCode as e:
-            raise NegotiationTimeout from e
-        except asyncio.TimeoutError as e:
+        except (InvalidStatusCode,  asyncio.TimeoutError) as e:
             raise NegotiationTimeout from e
 
         except Exception:
