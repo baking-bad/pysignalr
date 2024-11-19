@@ -23,6 +23,10 @@ DEFAULT_MAX_SIZE = 2**20  # 1 MB
 DEFAULT_PING_INTERVAL = 10
 DEFAULT_CONNECTION_TIMEOUT = 10
 
+BACKOFF_MIN = 4
+BACKOFF_MAX = 300
+BACKOFF_INC = 1.4
+
 _logger = logging.getLogger('pysignalr.transport')
 
 
@@ -85,6 +89,7 @@ class WebsocketTransport(Transport):
         self._ws: WebSocketClientProtocol | None = None
         self._open_callback: Callable[[], Awaitable[None]] | None = None
         self._close_callback: Callable[[], Awaitable[None]] | None = None
+        self._backoff = BACKOFF_MIN
 
     def on_open(self, callback: Callable[[], Awaitable[None]]) -> None:
         """
@@ -118,9 +123,15 @@ class WebsocketTransport(Transport):
         Runs the WebSocket transport, managing the connection lifecycle.
         """
         while True:
-            with suppress(NegotiationTimeout):
+            try:
                 await self._loop()
-            await self._set_state(ConnectionState.disconnected)
+            except NegotiationTimeout:
+                await self._set_state(ConnectionState.disconnected)
+                self._backoff = min(int(self._backoff * BACKOFF_INC), BACKOFF_MAX)
+                await asyncio.sleep(self._backoff)
+            else:
+                await self._set_state(ConnectionState.disconnected)
+                self._backoff = BACKOFF_MIN            with suppress(NegotiationTimeout):
 
     async def send(self, message: Message) -> None:
         """

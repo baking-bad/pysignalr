@@ -5,7 +5,6 @@ __version__ = importlib.metadata.version('pysignalr')
 
 import asyncio
 import random
-from http import HTTPStatus
 from typing import AsyncIterator
 
 import websockets.legacy.client
@@ -45,8 +44,7 @@ async def __aiter__(
 
         # Handle expired connection URLs by raising a NegotiationTimeout exception.
         except InvalidStatusCode as e:
-            if e.status_code == HTTPStatus.NOT_FOUND:
-                raise NegotiationTimeout from e
+            raise NegotiationTimeout from e
         except asyncio.TimeoutError as e:
             raise NegotiationTimeout from e
 
