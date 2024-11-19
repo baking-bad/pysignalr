@@ -131,7 +131,7 @@ class WebsocketTransport(Transport):
                 await asyncio.sleep(self._backoff)
             else:
                 await self._set_state(ConnectionState.disconnected)
-                self._backoff = BACKOFF_MIN            with suppress(NegotiationTimeout):
+                self._backoff = BACKOFF_MIN
 
     async def send(self, message: Message) -> None:
         """
