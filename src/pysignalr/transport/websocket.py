@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import ssl
 from contextlib import suppress
 from http import HTTPStatus
 from typing import Awaitable, Callable
@@ -54,6 +55,7 @@ class WebsocketTransport(Transport):
         connection_timeout: int = DEFAULT_CONNECTION_TIMEOUT,
         max_size: int | None = DEFAULT_MAX_SIZE,
         access_token_factory: Callable[[], str] | None = None,
+        ssl: ssl.SSLContext | None = None,
     ):
         """
         Initializes the WebSocket transport with the provided parameters.
@@ -79,6 +81,7 @@ class WebsocketTransport(Transport):
         self._connection_timeout = connection_timeout
         self._max_size = max_size
         self._access_token_factory = access_token_factory
+        self._ssl = ssl
 
         self._state = ConnectionState.disconnected
         self._connected = asyncio.Event()
@@ -144,14 +147,27 @@ class WebsocketTransport(Transport):
             except ServerConnectionError as e:
                 raise NegotiationTimeout from e
 
-        connection_loop = connect(
-            self._url,
-            extra_headers=self._headers,
-            ping_interval=self._ping_interval,
-            open_timeout=self._connection_timeout,
-            max_size=self._max_size,
-            logger=_logger,
-        )
+        # Since websockets interprets the presence of the ssl option as something different than providing None,
+        # the call needs to be made with or without ssl option to work properly
+        if self._ssl is None:
+            connection_loop = connect(
+                self._url,
+                extra_headers=self._headers,
+                ping_interval=self._ping_interval,
+                open_timeout=self._connection_timeout,
+                max_size=self._max_size,
+                logger=_logger,
+            )
+        else:
+            connection_loop = connect(
+                self._url,
+                extra_headers=self._headers,
+                ping_interval=self._ping_interval,
+                open_timeout=self._connection_timeout,
+                max_size=self._max_size,
+                logger=_logger,
+                ssl=self._ssl,
+            )
 
         async for conn in connection_loop:
             try:
