@@ -14,7 +14,7 @@ from websockets.exceptions import ConnectionClosed
 from websockets.protocol import State
 
 import pysignalr.exceptions as exceptions
-from pysignalr import NegotiationTimeout, NegotiationNotfound, NegotiationFailure
+from pysignalr import NegotiationFailure
 from pysignalr.messages import CompletionMessage, Message, PingMessage
 from pysignalr.protocol.abstract import Protocol
 from pysignalr.transport.abstract import ConnectionState, Transport
@@ -133,7 +133,7 @@ class WebsocketTransport(Transport):
         while True:
             try:
                 await self._loop()
-            except (NegotiationNotfound, NegotiationFailure, NegotiationTimeout) as e:
+            except NegotiationFailure as e:
                 await self._set_state(ConnectionState.disconnected)
                 self._retry_count -=  1
                 if self._retry_count <= 0:
