@@ -5,6 +5,7 @@ __version__ = importlib.metadata.version('pysignalr')
 
 import asyncio
 import random
+from http import HTTPStatus
 from typing import AsyncIterator
 
 import websockets.legacy.client
