@@ -14,7 +14,7 @@ from websockets.exceptions import InvalidStatusCode
 
 class NegotiationFailure(Exception):
     """
-    Exception raised when the connection fails (all other HTTP return codes except 404).
+    Exception raised when the connection fails.
     """
     pass
 
