@@ -23,7 +23,7 @@ DEFAULT_MAX_SIZE = 2**20  # 1 MB
 DEFAULT_PING_INTERVAL = 10
 DEFAULT_CONNECTION_TIMEOUT = 10
 
-DEFAULT_RETRY_WAIT = 1
+DEFAULT_RETRY_SLEEP = 1
 DEFAULT_RETRY_MULTIPLIER = 1.1
 DEFAULT_RETRY_COUNT = 10
 
@@ -132,11 +132,11 @@ class WebsocketTransport(Transport):
                 await self._loop()
             except (NegotiationNotfound, NegotiationFailure, NegotiationTimeout) as e:
                 await self._set_state(ConnectionState.disconnected)
+                self._retry_count -=  1
                 if self._retry_count <= 0:
                     raise e
-                self._retry_count -=  1
                 self._retry_sleep *= self._retry_multiplier
-                await asyncio.sleep(self_retry_sleep)
+                await asyncio.sleep(self._retry_sleep)
             else:
                 await self._set_state(ConnectionState.disconnected)
 
