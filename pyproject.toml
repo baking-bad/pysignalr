@@ -38,7 +38,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4"
-websockets = "^12.0"
+websockets = ">=12.0,<14"
 aiohttp = "^3.7.4"
 msgpack = "^1.0.2"
 orjson = "^3.9.0"
