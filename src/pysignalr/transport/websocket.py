@@ -132,7 +132,7 @@ class WebsocketTransport(Transport):
                 await self._loop()
             except (NegotiationNotfound, NegotiationFailure, NegotiationTimeout) as e:
                 await self._set_state(ConnectionState.disconnected)
-                if self._retry_count == 0:
+                if self._retry_count <= 0:
                     raise e
                 self._retry_count -=  1
                 self._retry_sleep *= self._retry_multiplier
