@@ -11,9 +11,21 @@ import websockets.legacy.client
 from websockets.exceptions import InvalidStatusCode
 
 
+class NegotiationNotfound(Exception):
+    """
+    Exception raised when the connection URL generated during negotiation is no longer valid (HTTP error 404).
+    """
+    pass
+
+class NegotiationFailure(Exception):
+    """
+    Exception raised when the connection fails (all other HTTP return codes except 404).
+    """
+    pass
+
 class NegotiationTimeout(Exception):
     """
-    Exception raised when the connection URL generated during negotiation is no longer valid.
+    Exception raised when the connection times out.
     """
     pass
 
@@ -43,7 +55,12 @@ async def __aiter__(
                 yield protocol
 
         # Handle expired connection URLs by raising a NegotiationTimeout exception.
-        except (InvalidStatusCode,  asyncio.TimeoutError) as e:
+        except InvalidStatusCode as e:
+            if e.status_code == HTTPStatus.NOT_FOUND:
+                raise NegotiationNotfound from e
+            else:
+                raise NegotiationFailure from e
+        except asyncio.TimeoutError as e:
             raise NegotiationTimeout from e
 
         except Exception:
