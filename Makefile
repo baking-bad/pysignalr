@@ -1,14 +1,18 @@
-.ONESHELL:
 .PHONY: $(MAKECMDGOALS)
-SRC = src tests example.py example_with_token.py
+MAKEFLAGS += --no-print-directory
 ##
 ##    🚧 pysignalr developer tools
 ##
-
-##
+SOURCE = src tests example.py example_with_token.py
 
 help:           ## Show this help (default)
 	@grep -F -h "##" $(MAKEFILE_LIST) | grep -F -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
+
+install:        ## Install dependencies
+	poetry sync
+
+update:         ## Update dependencies
+	poetry update
 
 all:            ## Run a whole CI pipeline: formatters, linters, tests
 	make lint test
@@ -22,13 +26,13 @@ test:           ## Run test suite
 ##
 
 black:          ## Format with black
-	black $(SRC)
+	black $(SOURCE)
 
 ruff:           ## Lint with ruff
-	ruff check --fix --unsafe-fixes $(SRC)
+	ruff check --fix --unsafe-fixes $(SOURCE)
 
 mypy:           ## Lint with mypy
-	mypy --strict $(SRC)
+	mypy --strict $(SOURCE)
 
 cover:          ## Print coverage for the current branch
 	diff-cover --compare-branch origin/master coverage.xml

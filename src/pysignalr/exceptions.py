@@ -43,3 +43,12 @@ class ServerError(HubError):
     """
 
     message: str | None
+
+
+@dataclass(frozen=True)
+class NegotiationFailure(HubError):
+    """
+    Exception raised when the protocol negotiation fails.
+    """
+
+    pass

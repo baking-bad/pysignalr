@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import uuid
-import ssl
 from collections import defaultdict
+from collections.abc import AsyncIterator
+from collections.abc import Awaitable
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import AsyncIterator
-from typing import Awaitable
-from typing import Callable
 
 from pysignalr.exceptions import ServerError
 from pysignalr.messages import CancelInvocationMessage
@@ -26,11 +25,17 @@ from pysignalr.protocol.json import JSONProtocol
 from pysignalr.transport.websocket import DEFAULT_CONNECTION_TIMEOUT
 from pysignalr.transport.websocket import DEFAULT_MAX_SIZE
 from pysignalr.transport.websocket import DEFAULT_PING_INTERVAL
+from pysignalr.transport.websocket import DEFAULT_RETRY_COUNT
+from pysignalr.transport.websocket import DEFAULT_RETRY_MULTIPLIER
+from pysignalr.transport.websocket import DEFAULT_RETRY_SLEEP
 from pysignalr.transport.websocket import WebsocketTransport
 
 if TYPE_CHECKING:
+    import ssl
+
     from pysignalr.protocol.abstract import Protocol
     from pysignalr.transport.abstract import Transport
+
 
 EmptyCallback = Callable[[], Awaitable[None]]
 AnyCallback = Callable[[Any], Awaitable[None]]
@@ -102,6 +107,9 @@ class SignalRClient:
         ping_interval: int = DEFAULT_PING_INTERVAL,
         connection_timeout: int = DEFAULT_CONNECTION_TIMEOUT,
         max_size: int | None = DEFAULT_MAX_SIZE,
+        retry_sleep: float = DEFAULT_RETRY_SLEEP,
+        retry_multiplier: float = DEFAULT_RETRY_MULTIPLIER,
+        retry_count: int = DEFAULT_RETRY_COUNT,
         access_token_factory: Callable[[], str] | None = None,
         ssl: ssl.SSLContext | None = None,
     ) -> None:
@@ -123,6 +131,9 @@ class SignalRClient:
             callback=self._on_message,
             headers=self._headers,
             ping_interval=ping_interval,
+            retry_sleep=retry_sleep,
+            retry_multiplier=retry_multiplier,
+            retry_count=retry_count,
             connection_timeout=connection_timeout,
             max_size=max_size,
             access_token_factory=access_token_factory,

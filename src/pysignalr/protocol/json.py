@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from json import JSONEncoder
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterable
 
 import orjson
 
@@ -20,6 +20,9 @@ from pysignalr.messages import PingMessage  # 6
 from pysignalr.messages import StreamInvocationMessage  # 4
 from pysignalr.messages import StreamItemMessage  # 2
 from pysignalr.protocol.abstract import Protocol
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class MessageEncoder(JSONEncoder):

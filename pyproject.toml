@@ -38,7 +38,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4"
-websockets = "*"
+websockets = ">=12.0,<14"
 aiohttp = "*"
 msgpack = "*"
 orjson = "*"
@@ -61,7 +61,7 @@ skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
-target-version = "py38"
+target-version = "py312"
 
 [tool.ruff.lint]
 extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RUF", "TCH", "UP"]
@@ -69,7 +69,7 @@ flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
 isort = { force-single-line = true, known-first-party = ["pysignalr"] }
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.12"
 strict = true
 
 [tool.pytest.ini_options]

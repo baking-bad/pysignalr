@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-from typing import Iterable
+from typing import TYPE_CHECKING
 
 from pysignalr.messages import HandshakeRequestMessage
 from pysignalr.messages import HandshakeResponseMessage
 from pysignalr.messages import Message
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class Protocol(ABC):

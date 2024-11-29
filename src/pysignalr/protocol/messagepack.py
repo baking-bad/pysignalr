@@ -2,9 +2,8 @@ from __future__ import annotations
 
 # TODO: Refactor this module
 from collections import deque
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterable
-from typing import Sequence
 from typing import cast
 
 import msgpack  # type: ignore[import-untyped]
@@ -23,6 +22,10 @@ from pysignalr.messages import PingMessage
 from pysignalr.messages import StreamInvocationMessage
 from pysignalr.messages import StreamItemMessage
 from pysignalr.protocol.abstract import Protocol
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from collections.abc import Sequence
 
 _attribute_priority = (
     # NOTE: Python limitation, left as is

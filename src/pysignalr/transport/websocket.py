@@ -2,12 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import ssl
-from contextlib import suppress
 from http import HTTPStatus
 from typing import TYPE_CHECKING
-from typing import Awaitable
-from typing import Callable
 
 from aiohttp import ClientSession
 from aiohttp import ClientTimeout
@@ -18,7 +14,6 @@ from websockets.exceptions import ConnectionClosed
 from websockets.protocol import State
 
 import pysignalr.exceptions as exceptions
-from pysignalr import NegotiationTimeout
 from pysignalr.messages import CompletionMessage
 from pysignalr.messages import Message
 from pysignalr.messages import PingMessage
@@ -29,11 +24,19 @@ from pysignalr.utils import get_negotiate_url
 from pysignalr.utils import replace_scheme
 
 if TYPE_CHECKING:
+    import ssl
+    from collections.abc import Awaitable
+    from collections.abc import Callable
+
     from pysignalr.protocol.abstract import Protocol
 
 DEFAULT_MAX_SIZE = 2**20  # 1 MB
 DEFAULT_PING_INTERVAL = 10
 DEFAULT_CONNECTION_TIMEOUT = 10
+
+DEFAULT_RETRY_SLEEP = 1
+DEFAULT_RETRY_MULTIPLIER = 1.1
+DEFAULT_RETRY_COUNT = 10
 
 _logger = logging.getLogger('pysignalr.transport')
 
@@ -64,6 +67,9 @@ class WebsocketTransport(Transport):
         skip_negotiation: bool = False,
         ping_interval: int = DEFAULT_PING_INTERVAL,
         connection_timeout: int = DEFAULT_CONNECTION_TIMEOUT,
+        retry_sleep: float = DEFAULT_RETRY_SLEEP,
+        retry_multiplier: float = DEFAULT_RETRY_MULTIPLIER,
+        retry_count: int = DEFAULT_RETRY_COUNT,
         max_size: int | None = DEFAULT_MAX_SIZE,
         access_token_factory: Callable[[], str] | None = None,
         ssl: ssl.SSLContext | None = None,
@@ -92,6 +98,9 @@ class WebsocketTransport(Transport):
         self._connection_timeout = connection_timeout
         self._max_size = max_size
         self._access_token_factory = access_token_factory
+        self._retry_sleep = retry_sleep
+        self._retry_multiplier = retry_multiplier
+        self._retry_count = retry_count
         self._ssl = ssl
 
         self._state = ConnectionState.disconnected
@@ -132,9 +141,17 @@ class WebsocketTransport(Transport):
         Runs the WebSocket transport, managing the connection lifecycle.
         """
         while True:
-            with suppress(NegotiationTimeout):
+            try:
                 await self._loop()
-            await self._set_state(ConnectionState.disconnected)
+            except exceptions.NegotiationFailure as e:
+                await self._set_state(ConnectionState.disconnected)
+                self._retry_count -= 1
+                if self._retry_count <= 0:
+                    raise e
+                self._retry_sleep *= self._retry_multiplier
+                await asyncio.sleep(self._retry_sleep)
+            else:
+                await self._set_state(ConnectionState.disconnected)
 
     async def send(self, message: Message) -> None:
         """
@@ -156,7 +173,7 @@ class WebsocketTransport(Transport):
             try:
                 await self._negotiate()
             except ServerConnectionError as e:
-                raise NegotiationTimeout from e
+                raise exceptions.NegotiationFailure from e
 
         # Since websockets interprets the presence of the ssl option as something different than providing None,
         # the call needs to be made with or without ssl option to work properly
@@ -245,7 +262,7 @@ class WebsocketTransport(Transport):
         """
         try:
             await asyncio.wait_for(self._connected.wait(), self._connection_timeout)
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             raise RuntimeError('The socket was never run') from e
         if not self._ws or self._ws.state != State.OPEN:
             raise RuntimeError('Connection is closed')
