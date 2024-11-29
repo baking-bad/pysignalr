@@ -11,7 +11,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -37,7 +36,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4"
+python = ">=3.9,<4"
 websockets = ">=12.0,<14"
 aiohttp = "*"
 msgpack = "*"
@@ -56,12 +55,12 @@ types-requests = "*"
 
 [tool.black]
 line-length = 120
-target-version = ["py38", "py39", "py310", "py311", "py312"]
+target-version = ["py39", "py310", "py311", "py312"]
 skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
-target-version = "py312"
+target-version = "py39"
 
 [tool.ruff.lint]
 extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RUF", "TCH", "UP"]
@@ -69,7 +68,6 @@ flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
 isort = { force-single-line = true, known-first-party = ["pysignalr"] }
 
 [tool.mypy]
-python_version = "3.12"
 strict = true
 
 [tool.pytest.ini_options]
