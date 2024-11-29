@@ -27,6 +27,9 @@ from pysignalr.transport.websocket import (
     DEFAULT_CONNECTION_TIMEOUT,
     DEFAULT_MAX_SIZE,
     DEFAULT_PING_INTERVAL,
+    DEFAULT_RETRY_SLEEP,
+    DEFAULT_RETRY_MULTIPLIER,
+    DEFAULT_RETRY_COUNT,
     WebsocketTransport,
 )
 
@@ -34,7 +37,6 @@ EmptyCallback = Callable[[], Awaitable[None]]
 AnyCallback = Callable[[Any], Awaitable[None]]
 MessageCallback = Callable[[Message], Awaitable[None]]
 CompletionMessageCallback = Callable[[CompletionMessage], Awaitable[None]]
-
 
 class ClientStream:
     """
@@ -100,6 +102,9 @@ class SignalRClient:
         ping_interval: int = DEFAULT_PING_INTERVAL,
         connection_timeout: int = DEFAULT_CONNECTION_TIMEOUT,
         max_size: int | None = DEFAULT_MAX_SIZE,
+        retry_sleep: float = DEFAULT_RETRY_SLEEP,
+        retry_multiplier: float = DEFAULT_RETRY_MULTIPLIER,
+        retry_count: int = DEFAULT_RETRY_COUNT,
         access_token_factory: Callable[[], str] | None = None,
         ssl: ssl.SSLContext | None = None,
     ) -> None:
@@ -121,6 +126,9 @@ class SignalRClient:
             callback=self._on_message,
             headers=self._headers,
             ping_interval=ping_interval,
+            retry_sleep=retry_sleep,
+            retry_multiplier=retry_multiplier,
+            retry_count=retry_count,
             connection_timeout=connection_timeout,
             max_size=max_size,
             access_token_factory=access_token_factory,

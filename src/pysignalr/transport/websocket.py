@@ -14,7 +14,7 @@ from websockets.exceptions import ConnectionClosed
 from websockets.protocol import State
 
 import pysignalr.exceptions as exceptions
-from pysignalr import NegotiationTimeout
+from pysignalr import NegotiationFailure
 from pysignalr.messages import CompletionMessage, Message, PingMessage
 from pysignalr.protocol.abstract import Protocol
 from pysignalr.transport.abstract import ConnectionState, Transport
@@ -23,6 +23,10 @@ from pysignalr.utils import get_connection_url, get_negotiate_url, replace_schem
 DEFAULT_MAX_SIZE = 2**20  # 1 MB
 DEFAULT_PING_INTERVAL = 10
 DEFAULT_CONNECTION_TIMEOUT = 10
+
+DEFAULT_RETRY_SLEEP = 1
+DEFAULT_RETRY_MULTIPLIER = 1.1
+DEFAULT_RETRY_COUNT = 10
 
 _logger = logging.getLogger('pysignalr.transport')
 
@@ -53,6 +57,9 @@ class WebsocketTransport(Transport):
         skip_negotiation: bool = False,
         ping_interval: int = DEFAULT_PING_INTERVAL,
         connection_timeout: int = DEFAULT_CONNECTION_TIMEOUT,
+        retry_sleep: float = DEFAULT_RETRY_SLEEP,
+        retry_multiplier: float = DEFAULT_RETRY_MULTIPLIER,
+        retry_count: int = DEFAULT_RETRY_COUNT,
         max_size: int | None = DEFAULT_MAX_SIZE,
         access_token_factory: Callable[[], str] | None = None,
         ssl: ssl.SSLContext | None = None,
@@ -81,6 +88,9 @@ class WebsocketTransport(Transport):
         self._connection_timeout = connection_timeout
         self._max_size = max_size
         self._access_token_factory = access_token_factory
+        self._retry_sleep = retry_sleep
+        self._retry_multiplier = retry_multiplier
+        self._retry_count = retry_count
         self._ssl = ssl
 
         self._state = ConnectionState.disconnected
@@ -121,9 +131,17 @@ class WebsocketTransport(Transport):
         Runs the WebSocket transport, managing the connection lifecycle.
         """
         while True:
-            with suppress(NegotiationTimeout):
+            try:
                 await self._loop()
-            await self._set_state(ConnectionState.disconnected)
+            except NegotiationFailure as e:
+                await self._set_state(ConnectionState.disconnected)
+                self._retry_count -=  1
+                if self._retry_count <= 0:
+                    raise e
+                self._retry_sleep *= self._retry_multiplier
+                await asyncio.sleep(self._retry_sleep)
+            else:
+                await self._set_state(ConnectionState.disconnected)
 
     async def send(self, message: Message) -> None:
         """
