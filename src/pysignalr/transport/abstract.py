@@ -17,6 +17,7 @@ class ConnectionState(IntEnum):
         reconnecting: The connection is being reestablished after being lost.
         disconnected: The connection has been lost or intentionally closed.
     """
+
     connecting = auto()
     connected = auto()
     reconnecting = auto()

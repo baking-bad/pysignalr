@@ -11,11 +11,11 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Typing :: Typed",
@@ -25,7 +25,7 @@ homepage = "https://github.com/baking-bad/pysignalr"
 authors = [
     "Lev Gorodetskii <pysignalr@drsr.io>",
     "mandrewcito <anbaalo@gmail.com>",
-    "Caio Barbieri <caio@lombello.com",
+    "Caio Barbieri <caio@lombello.com>",
 ]
 maintainers = [
     "Lev Gorodetskii <pysignalr@drsr.io>",
@@ -37,13 +37,13 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4"
+python = ">=3.9,<4"
 websockets = ">=12.0,<14"
-aiohttp = "^3.7.4"
-msgpack = "^1.0.2"
-orjson = "^3.9.0"
+aiohttp = "*"
+msgpack = "*"
+orjson = "*"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "*"
 diff-cover = "*"
 docker = "*"
@@ -52,38 +52,31 @@ mypy = "*"
 pytest = "*"
 pytest-asyncio = "*"
 pytest-cov = "*"
+types-requests = "*"
 
 [tool.black]
 line-length = 120
-target-version = ["py38", "py39", "py310", "py311", "py312"]
+target-version = ["py39", "py310", "py311", "py312"]
 skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
-ignore = [
-    "E402",  # module level import not at top of file
-    "E501",  # line too long
-    "TCH001", # breaks our runtime Pydantic magic
-]
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint]
-ignore = [
-    "E402",  # module level import not at top of file
-    "E501",  # line too long
-    "TCH001", # breaks our runtime Pydantic magic
-]
 extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RUF", "TCH", "UP"]
 flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
 isort = { force-single-line = true, known-first-party = ["pysignalr"] }
 
 [tool.mypy]
-python_version = "3.8"
 strict = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-log_cli_level = "WARNING"
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)s] %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 
 [tool.coverage.report]
 precision = 2

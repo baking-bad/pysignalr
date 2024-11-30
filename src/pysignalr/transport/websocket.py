@@ -2,23 +2,33 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import ssl
-from contextlib import suppress
 from http import HTTPStatus
-from typing import Awaitable, Callable
+from typing import TYPE_CHECKING
 
-from aiohttp import ClientSession, ClientTimeout
+from aiohttp import ClientSession
+from aiohttp import ClientTimeout
 from aiohttp import ServerConnectionError
-from websockets.client import WebSocketClientProtocol, connect
+from websockets.client import WebSocketClientProtocol
+from websockets.client import connect
 from websockets.exceptions import ConnectionClosed
 from websockets.protocol import State
 
 import pysignalr.exceptions as exceptions
-from pysignalr import NegotiationFailure
-from pysignalr.messages import CompletionMessage, Message, PingMessage
-from pysignalr.protocol.abstract import Protocol
-from pysignalr.transport.abstract import ConnectionState, Transport
-from pysignalr.utils import get_connection_url, get_negotiate_url, replace_scheme
+from pysignalr.messages import CompletionMessage
+from pysignalr.messages import Message
+from pysignalr.messages import PingMessage
+from pysignalr.transport.abstract import ConnectionState
+from pysignalr.transport.abstract import Transport
+from pysignalr.utils import get_connection_url
+from pysignalr.utils import get_negotiate_url
+from pysignalr.utils import replace_scheme
+
+if TYPE_CHECKING:
+    import ssl
+    from collections.abc import Awaitable
+    from collections.abc import Callable
+
+    from pysignalr.protocol.abstract import Protocol
 
 DEFAULT_MAX_SIZE = 2**20  # 1 MB
 DEFAULT_PING_INTERVAL = 10
@@ -133,9 +143,9 @@ class WebsocketTransport(Transport):
         while True:
             try:
                 await self._loop()
-            except NegotiationFailure as e:
+            except exceptions.NegotiationFailure as e:
                 await self._set_state(ConnectionState.disconnected)
-                self._retry_count -=  1
+                self._retry_count -= 1
                 if self._retry_count <= 0:
                     raise e
                 self._retry_sleep *= self._retry_multiplier
@@ -163,7 +173,7 @@ class WebsocketTransport(Transport):
             try:
                 await self._negotiate()
             except ServerConnectionError as e:
-                raise NegotiationTimeout from e
+                raise exceptions.NegotiationFailure from e
 
         # Since websockets interprets the presence of the ssl option as something different than providing None,
         # the call needs to be made with or without ssl option to work properly
@@ -252,7 +262,7 @@ class WebsocketTransport(Transport):
         """
         try:
             await asyncio.wait_for(self._connected.wait(), self._connection_timeout)
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             raise RuntimeError('The socket was never run') from e
         if not self._ws or self._ws.state != State.OPEN:
             raise RuntimeError('Connection is closed')
@@ -290,7 +300,7 @@ class WebsocketTransport(Transport):
         _logger.info('Sending handshake to server')
         token = self._access_token_factory() if self._access_token_factory else None
         if token:
-            self._headers["Authorization"] = f"Bearer {token}"
+            self._headers['Authorization'] = f'Bearer {token}'
         our_handshake = self._protocol.handshake_message()
         await conn.send(self._protocol.encode(our_handshake))
 
@@ -357,7 +367,7 @@ class WebsocketTransport(Transport):
 
 class BaseWebsocketTransport(WebsocketTransport):
     """
-    BaseWebsocketTransport is a subclass of WebsocketTransport that disables keepalive and handshake 
+    BaseWebsocketTransport is a subclass of WebsocketTransport that disables keepalive and handshake
     for simplified use cases.
     """
 

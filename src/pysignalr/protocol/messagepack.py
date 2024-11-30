@@ -2,31 +2,30 @@ from __future__ import annotations
 
 # TODO: Refactor this module
 from collections import deque
-from typing import (
-    Any,
-    Iterable,
-    Sequence,
-    cast
-)
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import cast
 
 import msgpack  # type: ignore[import-untyped]
 import orjson
 
-from pysignalr.messages import ( 
-    CancelInvocationMessage,
-    CloseMessage,
-    CompletionMessage,
-    HandshakeRequestMessage,
-    HandshakeResponseMessage,
-    InvocationClientStreamMessage,
-    InvocationMessage,
-    Message,
-    MessageType,
-    PingMessage,
-    StreamInvocationMessage,
-    StreamItemMessage
-)
+from pysignalr.messages import CancelInvocationMessage
+from pysignalr.messages import CloseMessage
+from pysignalr.messages import CompletionMessage
+from pysignalr.messages import HandshakeRequestMessage
+from pysignalr.messages import HandshakeResponseMessage
+from pysignalr.messages import InvocationClientStreamMessage
+from pysignalr.messages import InvocationMessage
+from pysignalr.messages import Message
+from pysignalr.messages import MessageType
+from pysignalr.messages import PingMessage
+from pysignalr.messages import StreamInvocationMessage
+from pysignalr.messages import StreamItemMessage
 from pysignalr.protocol.abstract import Protocol
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from collections.abc import Sequence
 
 _attribute_priority = (
     # NOTE: Python limitation, left as is

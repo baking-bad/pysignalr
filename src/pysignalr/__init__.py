@@ -1,22 +1,16 @@
-import importlib.metadata
-
-# Get the version of the 'pysignalr' package
-__version__ = importlib.metadata.version('pysignalr')
-
 import asyncio
+import importlib.metadata
 import random
-from http import HTTPStatus
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 import websockets.legacy.client
 from websockets.exceptions import InvalidStatusCode
 
+from pysignalr.exceptions import NegotiationFailure
 
-class NegotiationFailure(Exception):
-    """
-    Exception raised when the connection fails.
-    """
-    pass
+# Get the version of the 'pysignalr' package
+__version__ = importlib.metadata.version('pysignalr')
+
 
 async def __aiter__(
     self: websockets.legacy.client.Connect,
@@ -34,16 +28,15 @@ async def __aiter__(
         websockets.legacy.client.WebSocketClientProtocol: The WebSocket protocol.
 
     Raises:
-        NegotiationTimeout: If the connection URL is no longer valid during negotiation.
+        NegotiationFailure: If the connection URL is no longer valid during negotiation.
     """
     backoff_delay = self.BACKOFF_MIN
     while True:
         try:
             async with self as protocol:
                 yield protocol
-
         # Handle expired connection URLs by raising a NegotiationFailure exception.
-        except (InvalidStatusCode, asyncio.TimeoutError) as e:
+        except (TimeoutError, InvalidStatusCode) as e:
             raise NegotiationFailure from e
 
         except Exception:
