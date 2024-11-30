@@ -4,17 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [1.1.0] - 2024-06-03
+## [1.1.0] - 2024-11-30
+
+### Fixed
+
+- Fixed reconnection logic ([olalid](https://github.com/olalid))
 
 ### Added
 
-- Added `access_token_factory` argument to allow custom token generation. ([@caiolombello](https://github.com/caiolombello))
-- Added example ASP server with role-based JWT authentication for testing purposes. ([@caiolombello](https://github.com/caiolombello))
+- Added `access_token_factory` argument to allow custom token generation. ([caiolombello](https://github.com/caiolombello))
+- Added an option to supply external `ssl` context. ([olalid](https://github.com/olalid))
+- Added example ASP server with role-based JWT authentication for testing purposes. ([caiolombello](https://github.com/caiolombello))
+- Added support for 3.13.
+
+### Removed
+
+- Dropped support for Python 3.8.
 
 ### Other
 
-- Significantly improved user and internal documentation, test coverage. ([@caiolombello](https://github.com/caiolombello))
-- Loosened version constraints for dependencies.
+- Significantly improved user and internal documentation, test coverage. ([caiolombello](https://github.com/caiolombello))
+- Loosened version constraints for `websockets` and other dependencies. ([MichaelMKKelly](https://github.com/MichaelMKKelly))
 
 ## [1.0.0] - 2024-03-07
 

@@ -21,26 +21,29 @@ jobs:
           # Architectures
           - os: ubuntu-latest
             arch: amd64
-            python-version: '3.12'
+            python-version: '3.13'
           - os: ubuntu-latest
             arch: arm64
-            python-version: '3.12'
+            python-version: '3.13'
           - os: macos-latest
             arch: amd64
-            python-version: '3.12'
+            python-version: '3.13'
           - os: macos-latest
             arch: arm64
-            python-version: '3.12'
-          # Python versions
+            python-version: '3.13'
+            # Python versions
           - os: ubuntu-latest
             arch: amd64
-            python-version: '3.9'
+            python-version: '3.12'
+          - os: ubuntu-latest
+            arch: amd64
+            python-version: '3.11'
           - os: ubuntu-latest
             arch: amd64
             python-version: '3.10'
           - os: ubuntu-latest
             arch: amd64
-            python-version: '3.11'
+            python-version: '3.9'
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
