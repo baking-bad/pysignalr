@@ -52,6 +52,7 @@ mypy = "*"
 pytest = "*"
 pytest-asyncio = "*"
 pytest-cov = "*"
+types-requests = "*"
 
 [tool.black]
 line-length = 120
