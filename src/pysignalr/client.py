@@ -286,28 +286,40 @@ class SignalRClient:
             message (InvocationMessage): The invocation message.
         """
         expects_response = message.invocation_id is not None
-        if expects_response and sum(x is not None for x in self._message_handlers[message.target]) > 1:
-            _logger.error(f'Multiple results provided for "{message.target}". Sending error to server.')
-            await self._transport.send(CompletionMessage(invocation_id=message.invocation_id, error='Client provided multiple results.'))
+        callbacks = [callback for callback in self._message_handlers[message.target] if callback]
+
+        if not callbacks:
+            # There are no callbacks for the message.target
+            _logger.warning(f"No client method with the name '{message.target}' found.")
+            if expects_response:
+                _logger.error(f"No result given for '{message.target}' method and invocation ID '{message.invocation_id}'.")
+                await self._transport.send(
+                    CompletionMessage(invocation_id=message.invocation_id, error="Client didn't provide a result.")
+                )
             return None
 
-        for callback in self._message_handlers[message.target]:
-            if not callback:
-                continue
+        if expects_response and len(callbacks) > 1:
+            # There are multiple callbacks, so multiple results for the message.target
+            _logger.error(f"Multiple results provided for '{message.target}'. Sending error to server.")
+            await self._transport.send(
+                CompletionMessage(invocation_id=message.invocation_id, error='Client provided multiple results.')
+            )
+            return None
 
+        for callback in callbacks:
             try:
                 res = await callback(message.arguments)
-                if expects_response:
-                    return_message = CompletionMessage(
-                        invocation_id=message.invocation_id,
-                        result=res,
-                        error="Client didn't provide a result." if res is None else None
-                    )
-                    await self._transport.send(return_message)
-                else:
-                    _logger.error(f'Result given for "{message.target}" method but server is not expecting a result.')
+                if res:
+                    if expects_response:
+                        await self._transport.send(CompletionMessage(invocation_id=message.invocation_id, result=res))
+                    else:
+                        _logger.warning(f"Result given for '{message.target}' method but server is not expecting a result.")
+                elif expects_response:
+                    _logger.error(f"No result given for '{message.target}' method and invocation ID '{message.invocation_id}'.")
+                    await self._transport.send(CompletionMessage(invocation_id=message.invocation_id,
+                                                                 error="Client didn't provide a result."))
             except Exception as exc:
-                _logger.error(f'A callback for the method "{message.target}" threw error "{exc}".')
+                _logger.error(f"A callback for the method '{message.target}' threw error '{exc}'.")
                 if not expects_response:
                     raise exc
                 await self._transport.send(CompletionMessage(invocation_id=message.invocation_id, error=str(exc)))
