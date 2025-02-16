@@ -36,4 +36,16 @@ public class WeatherHub : Hub
     {
         await Clients.All.SendAsync("ReceiveWeatherForecast", forecast);
     }
+
+    /// <summary>
+    /// Trigger client result by invokeAsync method
+    /// </summary>
+    /// <param name="user"></param>
+    /// <param name="message"></param>
+    public async Task TriggerResultRequired(string user, string message)
+    {
+        var response = await Clients.Client(Context.ConnectionId).InvokeAsync<string>("ResultRequired", "Reply this message", CancellationToken.None);
+        if (response == "Reply message")
+            await Clients.Client(Context.ConnectionId).SendAsync("SuccessReceivedMessage", user, message);
+    }
 }

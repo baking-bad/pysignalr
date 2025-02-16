@@ -245,3 +245,75 @@ class TestPysignalr:
         # Log detailed messages received
         for user, message in received_messages:
             logging.info('Detailed Log: Message from %s - %s', user, message)
+
+    async def test_result_from_client(self, aspnet_server: str) -> None:
+        """
+        Tests send result from client when SignalR server use InvokeAsync method.
+        """
+        login_url = f'http://{aspnet_server}/api/auth/login'
+        logging.info('Attempting to log in at %s', login_url)
+        login_data = {'username': 'test', 'password': 'password'}
+        response = requests.post(login_url, json=login_data, timeout=10)
+        token = response.json().get('token')
+        if not token:
+            logging.error('Failed to obtain token from login response')
+            raise AssertionError('Failed to obtain token from login response')
+        logging.info('Obtained token: %s', token)
+
+        url = f'http://{aspnet_server}/weatherHub'
+        logging.info('Testing reply when receive InvokeAsync message with token to %s', url)
+
+        def token_factory() -> str:
+            return cast(str, token)
+
+        client = SignalRClient(
+            url=url,
+            access_token_factory=token_factory,
+            headers={'mycustomheader': 'mycustomheadervalue'},
+        )
+
+        received_messages = []
+        async def on_result_require(arguments: Any) -> str:
+            argument = arguments[0]
+            logging.info('Message to reply received: %s', argument)
+            return "Reply message"
+
+        async def on_message_received(arguments: Any) -> None:
+            user, message = arguments
+            logging.info('Server received the reply and now send a message from %s: %s', user, message)
+            received_messages.append((user, message))
+            if len(received_messages) >= 1:
+                task.cancel()
+
+        client.on('ResultRequired', on_result_require)
+        client.on('SuccessReceivedMessage', on_message_received)
+
+        task = asyncio.create_task(client.run())
+
+        async def _on_open() -> None:
+            logging.info('Connection with token opened, sending message to trigger invoke async method')
+            await client.send('TriggerResultRequired', ['testuser', 'Hello, World!'])  # type: ignore[list-item]
+
+        client.on_open(_on_open)
+
+        try:
+            with suppress(asyncio.CancelledError):
+                await asyncio.wait_for(task, timeout=30)  # Set a timeout for the task
+        except ServerError as e:
+            logging.error('Server error: %s', e)
+            raise
+        except asyncio.TimeoutError:
+            logging.error('Test timed out')
+            task.cancel()
+            await task
+
+        # Verify if the message was received correctly
+        assert received_messages, 'No messages were received'
+        assert received_messages[0] == (
+            'testuser',
+            'Hello, World!',
+        ), f'Unexpected message received: {received_messages[0]}'
+
+        # Log detailed messages received
+        for user, message in received_messages:
+            logging.info('Detailed Log: Message from %s - %s', user, message)
