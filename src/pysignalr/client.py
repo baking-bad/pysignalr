@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+import logging
 from collections import defaultdict
 from collections.abc import AsyncIterator
 from collections.abc import Awaitable
@@ -38,10 +39,11 @@ if TYPE_CHECKING:
 
 
 EmptyCallback = Callable[[], Awaitable[None]]
-AnyCallback = Callable[[Any], Awaitable[None]]
+AnyCallback = Callable[[Any], Awaitable[Any | None]]
 MessageCallback = Callable[[Message], Awaitable[None]]
 CompletionMessageCallback = Callable[[CompletionMessage], Awaitable[None]]
 
+_logger = logging.getLogger('pysignalr.client')
 
 class ClientStream:
     """
@@ -283,9 +285,45 @@ class SignalRClient:
         Args:
             message (InvocationMessage): The invocation message.
         """
-        for callback in self._message_handlers[message.target]:
-            if callback:
-                await callback(message.arguments)
+        expects_response = message.invocation_id is not None
+        callbacks = [callback for callback in self._message_handlers[message.target] if callback]
+
+        if not callbacks:
+            # There are no callbacks for the message.target
+            _logger.warning(f"No client method with the name '{message.target}' found.")
+            if expects_response:
+                _logger.error(f"No result given for '{message.target}' method and invocation ID '{message.invocation_id}'.")
+                await self._transport.send(
+                    CompletionMessage(invocation_id=message.invocation_id, error="Client didn't provide a result.")
+                )
+            return None
+
+        if expects_response and len(callbacks) > 1:
+            # There are multiple callbacks, so multiple results for the message.target
+            _logger.error(f"Multiple results provided for '{message.target}'. Sending error to server.")
+            await self._transport.send(
+                CompletionMessage(invocation_id=message.invocation_id, error='Client provided multiple results.')
+            )
+            return None
+
+        for callback in callbacks:
+            try:
+                res = await callback(message.arguments)
+                if res:
+                    if expects_response:
+                        await self._transport.send(CompletionMessage(invocation_id=message.invocation_id, result=res))
+                    else:
+                        _logger.warning(f"Result given for '{message.target}' method but server is not expecting a result.")
+                elif expects_response:
+                    _logger.error(f"No result given for '{message.target}' method and invocation ID '{message.invocation_id}'.")
+                    await self._transport.send(CompletionMessage(invocation_id=message.invocation_id,
+                                                                 error="Client didn't provide a result."))
+            except Exception as exc:
+                _logger.error(f"A callback for the method '{message.target}' threw error '{exc}'.")
+                if not expects_response:
+                    raise exc
+                await self._transport.send(CompletionMessage(invocation_id=message.invocation_id, error=str(exc)))
+
 
     async def _on_completion_message(self, message: CompletionMessage) -> None:
         """

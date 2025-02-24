@@ -22,6 +22,14 @@ async def on_close() -> None:
 async def on_message(message: list[dict[str, Any]]) -> None:
     print(f'Received message: {message}')
 
+async def on_client_result(message: list[dict[str, Any]]) -> str:
+    """
+    The server can request a result from a client.
+    This requires the server to use ISingleClientProxy.InvokeAsync and the client to return a result from its .On handler.
+    https://learn.microsoft.com/en-us/aspnet/core/signalr/hubs?view=aspnetcore-9.0#client-results
+    """
+    print(f'Received message: {message}')
+    return 'reply'
 
 async def on_error(message: CompletionMessage) -> None:
     print(f'Received error: {message.error}')
@@ -34,6 +42,7 @@ async def main() -> None:
     client.on_close(on_close)
     client.on_error(on_error)
     client.on('operations', on_message)
+    client.on('client_result', on_client_result)
 
     await asyncio.gather(
         client.run(),

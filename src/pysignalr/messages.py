@@ -181,6 +181,22 @@ class CompletionMessage(Message, type_=MessageType.completion):
     error: str | None = None
     headers: dict[str, Any] | None = None
 
+    def dump(self) -> dict[str, Any]:
+        data = super().dump()
+
+        result = data.pop('result', None)
+        error = data.pop('error', None)
+        headers = data.pop('headers', None)
+
+        if result is not None:
+            data['result'] = result
+        if error is not None:
+            data['error'] = error
+        if headers is not None:
+            data['headers'] = headers
+
+        return data
+
 
 @dataclass
 class InvocationMessage(Message, type_=MessageType.invocation):
