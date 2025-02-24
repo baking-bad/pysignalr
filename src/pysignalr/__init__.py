@@ -3,7 +3,7 @@ import importlib.metadata
 import random
 from collections.abc import AsyncIterator
 
-import websockets.legacy.client
+import websockets.asyncio.client
 from websockets.exceptions import InvalidStatusCode
 
 from pysignalr.exceptions import NegotiationFailure
@@ -13,8 +13,8 @@ __version__ = importlib.metadata.version('pysignalr')
 
 
 async def __aiter__(
-    self: websockets.legacy.client.Connect,
-) -> AsyncIterator[websockets.legacy.client.WebSocketClientProtocol]:
+    self: websockets.asyncio.client.connect,
+) -> AsyncIterator[websockets.asyncio.client.ClientConnection]:
     """
     Asynchronous iterator for the Connect object.
 
@@ -22,10 +22,10 @@ async def __aiter__(
     If the connection fails, it retries with an exponential backoff.
 
     Args:
-        self (websockets.legacy.client.Connect): The Connect object.
+        self (websockets.asyncio.client.connect): The Connect object.
 
     Yields:
-        websockets.legacy.client.WebSocketClientProtocol: The WebSocket protocol.
+        websockets.asyncio.client.ClientConnection: The WebSocket protocol.
 
     Raises:
         NegotiationFailure: If the connection URL is no longer valid during negotiation.
@@ -67,4 +67,4 @@ async def __aiter__(
 
 
 # Override the __aiter__ method of the Connect class
-websockets.legacy.client.Connect.__aiter__ = __aiter__  # type: ignore[method-assign]
+websockets.asyncio.client.connect.__aiter__ = __aiter__  # type: ignore[method-assign]

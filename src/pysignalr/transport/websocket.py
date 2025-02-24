@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 from aiohttp import ClientSession
 from aiohttp import ClientTimeout
 from aiohttp import ServerConnectionError
-from websockets.client import WebSocketClientProtocol
-from websockets.client import connect
+from websockets.asyncio.client import ClientConnection
+from websockets.asyncio.client import connect
 from websockets.exceptions import ConnectionClosed
 from websockets.protocol import State
 
@@ -105,7 +105,7 @@ class WebsocketTransport(Transport):
 
         self._state = ConnectionState.disconnected
         self._connected = asyncio.Event()
-        self._ws: WebSocketClientProtocol | None = None
+        self._ws: ClientConnection | None = None
         self._open_callback: Callable[[], Awaitable[None]] | None = None
         self._close_callback: Callable[[], Awaitable[None]] | None = None
 
@@ -180,7 +180,7 @@ class WebsocketTransport(Transport):
         if self._ssl is None:
             connection_loop = connect(
                 self._url,
-                extra_headers=self._headers,
+                additional_headers=self._headers,
                 ping_interval=self._ping_interval,
                 open_timeout=self._connection_timeout,
                 max_size=self._max_size,
@@ -189,7 +189,7 @@ class WebsocketTransport(Transport):
         else:
             connection_loop = connect(
                 self._url,
-                extra_headers=self._headers,
+                additional_headers=self._headers,
                 ping_interval=self._ping_interval,
                 open_timeout=self._connection_timeout,
                 max_size=self._max_size,
@@ -250,12 +250,12 @@ class WebsocketTransport(Transport):
 
         self._state = state
 
-    async def _get_connection(self) -> WebSocketClientProtocol:
+    async def _get_connection(self) -> ClientConnection:
         """
         Gets the active WebSocket connection, ensuring it is open.
 
         Returns:
-            WebSocketClientProtocol: The active WebSocket connection.
+            ClientConnection: The active WebSocket connection.
 
         Raises:
             RuntimeError: If the connection is closed or was never run.
@@ -268,34 +268,34 @@ class WebsocketTransport(Transport):
             raise RuntimeError('Connection is closed')
         return self._ws
 
-    async def _process(self, conn: WebSocketClientProtocol) -> None:
+    async def _process(self, conn: ClientConnection) -> None:
         """
         Processes incoming messages from the WebSocket connection.
 
         Args:
-            conn (WebSocketClientProtocol): The WebSocket connection.
+            conn (ClientConnection): The WebSocket connection.
         """
         while True:
             raw_message = await conn.recv()
             await self._on_raw_message(raw_message)
 
-    async def _keepalive(self, conn: WebSocketClientProtocol) -> None:
+    async def _keepalive(self, conn: ClientConnection) -> None:
         """
         Sends periodic ping messages to keep the connection alive.
 
         Args:
-            conn (WebSocketClientProtocol): The WebSocket connection.
+            conn (ClientConnection): The WebSocket connection.
         """
         while True:
             await asyncio.sleep(10)
             await conn.send(self._protocol.encode(PingMessage()))
 
-    async def _handshake(self, conn: WebSocketClientProtocol) -> None:
+    async def _handshake(self, conn: ClientConnection) -> None:
         """
         Performs the WebSocket handshake with the server.
 
         Args:
-            conn (WebSocketClientProtocol): The WebSocket connection.
+            conn (ClientConnection): The WebSocket connection.
         """
         _logger.info('Sending handshake to server')
         token = self._access_token_factory() if self._access_token_factory else None
@@ -371,20 +371,20 @@ class BaseWebsocketTransport(WebsocketTransport):
     for simplified use cases.
     """
 
-    async def _keepalive(self, conn: WebSocketClientProtocol) -> None:
+    async def _keepalive(self, conn: ClientConnection) -> None:
         """
         Disabled keepalive method.
 
         Args:
-            conn (WebSocketClientProtocol): The WebSocket connection.
+            conn (ClientConnection): The WebSocket connection.
         """
         return
 
-    async def _handshake(self, conn: WebSocketClientProtocol) -> None:
+    async def _handshake(self, conn: ClientConnection) -> None:
         """
         Disabled handshake method.
 
         Args:
-            conn (WebSocketClientProtocol): The WebSocket connection.
+            conn (ClientConnection): The WebSocket connection.
         """
         return
