@@ -273,10 +273,11 @@ class TestPysignalr:
         )
 
         received_messages = []
+
         async def on_result_require(arguments: Any) -> str:
             argument = arguments[0]
             logging.info('Message to reply received: %s', argument)
-            return "Reply message"
+            return 'Reply message'
 
         async def on_message_received(arguments: Any) -> None:
             user, message = arguments
