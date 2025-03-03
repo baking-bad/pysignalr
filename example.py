@@ -22,6 +22,7 @@ async def on_close() -> None:
 async def on_message(message: list[dict[str, Any]]) -> None:
     print(f'Received message: {message}')
 
+
 async def on_client_result(message: list[dict[str, Any]]) -> str:
     """
     The server can request a result from a client.
@@ -30,6 +31,7 @@ async def on_client_result(message: list[dict[str, Any]]) -> str:
     """
     print(f'Received message: {message}')
     return 'reply'
+
 
 async def on_error(message: CompletionMessage) -> None:
     print(f'Received error: {message.error}')
