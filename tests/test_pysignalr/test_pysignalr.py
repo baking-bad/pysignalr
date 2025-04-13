@@ -60,7 +60,7 @@ async def aspnet_server() -> str:
     )
     atexit.register(container.stop)
     container.reload()
-    ip = cast(str, container.attrs['NetworkSettings']['IPAddress'])
+    ip = cast('str', container.attrs['NetworkSettings']['IPAddress'])
 
     logging.info('Waiting for server to start')
     wait_for_server(f'http://{ip}/api/auth/login')
@@ -126,7 +126,7 @@ class TestPysignalr:
         logging.info('Testing connection with token to %s', url)
 
         def token_factory() -> str:
-            return cast(str, token)
+            return cast('str', token)
 
         client = SignalRClient(
             url=url,
@@ -201,7 +201,7 @@ class TestPysignalr:
         logging.info('Testing send and receive message with token to %s', url)
 
         def token_factory() -> str:
-            return cast(str, token)
+            return cast('str', token)
 
         client = SignalRClient(
             url=url,
@@ -264,7 +264,7 @@ class TestPysignalr:
         logging.info('Testing reply when receive InvokeAsync message with token to %s', url)
 
         def token_factory() -> str:
-            return cast(str, token)
+            return cast('str', token)
 
         client = SignalRClient(
             url=url,

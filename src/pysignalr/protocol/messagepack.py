@@ -98,7 +98,7 @@ class MessagepackProtocol(Protocol):
                 else:
                     raw_message.append(getattr(message, attr))
 
-        encoded_message = cast(bytes, msgpack.packb(raw_message))
+        encoded_message = cast('bytes', msgpack.packb(raw_message))
         varint_length = self._to_varint(len(encoded_message))
         return varint_length + encoded_message
 
