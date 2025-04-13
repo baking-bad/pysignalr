@@ -4,7 +4,7 @@ import random
 from collections.abc import AsyncIterator
 
 import websockets.asyncio.client
-from websockets.exceptions import InvalidStatusCode
+from websockets.exceptions import InvalidHandshake
 
 from pysignalr.exceptions import NegotiationFailure
 
@@ -36,7 +36,7 @@ async def __aiter__(
             async with self as protocol:
                 yield protocol
         # Handle expired connection URLs by raising a NegotiationFailure exception.
-        except (TimeoutError, InvalidStatusCode) as e:
+        except (TimeoutError, InvalidHandshake) as e:
             raise NegotiationFailure from e
 
         except Exception:
