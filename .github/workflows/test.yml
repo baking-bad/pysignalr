@@ -61,5 +61,6 @@ jobs:
         run: poetry install
       - name: Run lint
         run: poetry run make lint
+        if: matrix.python-version != '3.9'
       - name: Run tests
         run: poetry run make test
