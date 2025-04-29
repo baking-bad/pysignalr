@@ -4,12 +4,18 @@ import random
 from collections.abc import AsyncIterator
 
 import websockets.asyncio.client
-from websockets.exceptions import InvalidStatusCode
+from websockets.exceptions import InvalidHandshake
 
 from pysignalr.exceptions import NegotiationFailure
 
-# Get the version of the 'pysignalr' package
 __version__ = importlib.metadata.version('pysignalr')
+
+
+# NOTE: As of `websockets` 12.0
+BACKOFF_MIN = 1.92
+BACKOFF_MAX = 60.0
+BACKOFF_FACTOR = 1.618
+BACKOFF_INITIAL = 5
 
 
 async def __aiter__(
@@ -30,20 +36,20 @@ async def __aiter__(
     Raises:
         NegotiationFailure: If the connection URL is no longer valid during negotiation.
     """
-    backoff_delay = self.BACKOFF_MIN
+    backoff_delay = BACKOFF_MIN
     while True:
         try:
             async with self as protocol:
                 yield protocol
         # Handle expired connection URLs by raising a NegotiationFailure exception.
-        except (TimeoutError, InvalidStatusCode) as e:
+        except (TimeoutError, InvalidHandshake) as e:
             raise NegotiationFailure from e
 
         except Exception:
             # Add a random initial delay between 0 and 5 seconds.
             # See 7.2.3. Recovering from Abnormal Closure in RFC 6544.
-            if backoff_delay == self.BACKOFF_MIN:
-                initial_delay = random.random() * self.BACKOFF_INITIAL
+            if backoff_delay == BACKOFF_MIN:
+                initial_delay = random.random() * BACKOFF_INITIAL
                 self.logger.info(
                     '! connect failed; reconnecting in %.1f seconds',
                     initial_delay,
@@ -58,12 +64,12 @@ async def __aiter__(
                 )
                 await asyncio.sleep(int(backoff_delay))
             # Increase delay with truncated exponential backoff.
-            backoff_delay = backoff_delay * self.BACKOFF_FACTOR
-            backoff_delay = min(backoff_delay, self.BACKOFF_MAX)
+            backoff_delay = backoff_delay * BACKOFF_FACTOR
+            backoff_delay = min(backoff_delay, BACKOFF_MAX)
             continue
         else:
             # Connection succeeded - reset backoff delay.
-            backoff_delay = self.BACKOFF_MIN
+            backoff_delay = BACKOFF_MIN
 
 
 # Override the __aiter__ method of the Connect class
