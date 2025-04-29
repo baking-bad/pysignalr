@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [1.3.0] - 2025-04-29
+
+## Changed
+
+- Updated `websockets` library to 15.0.
+
+## Removed
+
+- Dropped support for Python 3.9 (it was broken for several releases anyway).
+
 ## [1.2.0] - 2025-03-03
 
 ### Added
