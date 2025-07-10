@@ -186,13 +186,15 @@ class JSONProtocol(Protocol):
             Message: The resulting Message object.
         """
         message_type = MessageType(dict_message.pop('type', 'close'))
-        dict_message['invocation_id'] = dict_message.pop('invocationId', None)
 
         if message_type is MessageType.invocation:
+            dict_message['invocation_id'] = dict_message.pop('invocationId', None)
             return InvocationMessage(**dict_message)
         elif message_type is MessageType.stream_item:
+            dict_message['invocation_id'] = dict_message.pop('invocationId', None)
             return StreamItemMessage(**dict_message)
         elif message_type is MessageType.completion:
+            dict_message['invocation_id'] = dict_message.pop('invocationId', None)
             return CompletionMessage(**dict_message)
         elif message_type is MessageType.stream_invocation:
             return StreamInvocationMessage(**dict_message)
