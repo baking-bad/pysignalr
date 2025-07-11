@@ -226,6 +226,7 @@ class SignalRClient:
         """
         invocation_id = str(uuid.uuid4())
         message = StreamInvocationMessage(invocation_id, event, event_params, self._headers)
+        self._invocation_handlers[invocation_id] = on_complete
         self._stream_handlers[invocation_id] = (on_next, on_complete, on_error)
         await self._transport.send(message)
 
