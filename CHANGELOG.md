@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - Added support for Python 3.14.
 
+## Changed
+
+- Updated `websockets` library to 16.0.
+
 ### Fixed
 
 - Fixed MessagePack decoder reading only 1 byte for varint-encoded message length.

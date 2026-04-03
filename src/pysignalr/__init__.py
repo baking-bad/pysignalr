@@ -1,5 +1,4 @@
 import asyncio
-import importlib.metadata
 import random
 from collections.abc import AsyncIterator
 
@@ -7,9 +6,6 @@ import websockets.asyncio.client
 from websockets.exceptions import InvalidHandshake
 
 from pysignalr.exceptions import NegotiationFailure
-
-__version__ = importlib.metadata.version('pysignalr')
-
 
 # NOTE: As of `websockets` 12.0
 BACKOFF_MIN = 1.92
