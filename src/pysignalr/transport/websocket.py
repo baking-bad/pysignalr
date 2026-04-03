@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from aiohttp import ClientSession
 from aiohttp import ClientTimeout
 from aiohttp import ServerConnectionError
+from aiohttp import TCPConnector
 from websockets.asyncio.client import ClientConnection
 from websockets.asyncio.client import connect
 from websockets.exceptions import ConnectionClosed
@@ -319,8 +320,10 @@ class WebsocketTransport(Transport):
         negotiate_url = get_negotiate_url(self._url)
         _logger.info('Performing negotiation, URL: `%s`', negotiate_url)
 
+        connector = TCPConnector(ssl=self._ssl) if self._ssl is not None else None
         session = ClientSession(
             timeout=ClientTimeout(connect=self._connection_timeout),
+            connector=connector,
         )
         async with session:
             async with session.post(negotiate_url, headers=self._headers) as response:

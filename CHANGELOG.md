@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - Fixed `_stream_handlers` entries not being cleaned up on stream completion (memory leak).
 - Fixed invalid string fallback `'close'` for `MessageType` IntEnum in JSON protocol `parse_message`.
 - Fixed `MessagepackProtocol.encode()` raising `TypeError` by passing a `deque` to `msgpack.packb` instead of a `list`.
+- Fixed custom SSL context not being applied to the HTTP negotiation request (`aiohttp.ClientSession`).
 
 ## [1.3.0] - 2025-04-29
 
