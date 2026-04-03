@@ -8,7 +8,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'uv.lock'
       - '.github/workflows/test.yml'
 
 jobs:
@@ -21,17 +21,20 @@ jobs:
           # Architectures
           - os: ubuntu-latest
             arch: amd64
-            python-version: '3.13'
+            python-version: '3.14'
           - os: ubuntu-latest
             arch: arm64
-            python-version: '3.13'
+            python-version: '3.14'
           - os: macos-latest
             arch: amd64
-            python-version: '3.13'
+            python-version: '3.14'
           - os: macos-latest
             arch: arm64
+            python-version: '3.14'
+          # Python versions
+          - os: ubuntu-latest
+            arch: amd64
             python-version: '3.13'
-            # Python versions
           - os: ubuntu-latest
             arch: amd64
             python-version: '3.12'
@@ -45,18 +48,14 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v3
 
-      - name: Install poetry
-        run: pipx install poetry
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
 
       - name: Install project
-        run: poetry install
+        run: make install
       - name: Run lint
-        run: poetry run make lint
+        run: uv run make lint
       - name: Run tests
-        run: poetry run make test
+        run: uv run make test

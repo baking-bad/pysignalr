@@ -9,7 +9,7 @@
 !**/Makefile
 !**/pyproject.toml
 !**/requirements*
-!**/pdm.lock
+!**/uv.lock
 !**/README.md
 !**/.keep
 !**/docker-compose.yml

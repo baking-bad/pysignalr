@@ -1,8 +1,9 @@
-[tool]
-[tool.poetry]
+[project]
 name = "pysignalr"
 version = "1.3.0"
 description = "Modern, reliable and async-ready client for SignalR protocol"
+readme = "README.md"
+requires-python = ">=3.10,<4"
 keywords = ["signalr", "asp", "client", "asyncio", "json", "messagepack", "websockets"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -15,47 +16,47 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Typing :: Typed",
 ]
-repository = "https://github.com/baking-bad/pysignalr"
-homepage = "https://github.com/baking-bad/pysignalr"
 authors = [
-    "Lev Gorodetskii <pysignalr@drsr.io>",
-    "mandrewcito <anbaalo@gmail.com>",
-    "Caio Barbieri <caio@lombello.com>",
+    { name = "Lev Gorodetskii", email = "github@drsr.io" },
+    { name = "mandrewcito", email = "anbaalo@gmail.com" },
+    { name = "Caio Barbieri", email = "caio@lombello.com" },
 ]
 maintainers = [
-    "Lev Gorodetskii <pysignalr@drsr.io>",
+    { name = "Lev Gorodetskii", email = "github@drsr.io" },
 ]
-readme = "README.md"
-
-packages = [
-    { include = "pysignalr", from = "src" },
+dependencies = [
+    "websockets>=15.0.1,<16",
+    "aiohttp",
+    "msgpack",
+    "orjson",
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.10,<4"
-websockets = ">=15.0.1,<16"
-aiohttp = "*"
-msgpack = "*"
-orjson = "*"
+[dependency-groups]
+dev = [
+    "black",
+    "diff-cover",
+    "docker",
+    "ruff",
+    "mypy",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "types-requests",
+]
 
-[tool.poetry.group.dev.dependencies]
-black = "*"
-diff-cover = "*"
-docker = "*"
-ruff = "*"
-mypy = "*"
-pytest = "*"
-pytest-asyncio = "*"
-pytest-cov = "*"
-types-requests = "*"
+[project.urls]
+Repository = "https://github.com/baking-bad/pysignalr"
+Homepage = "https://github.com/baking-bad/pysignalr"
+
 
 [tool.black]
 line-length = 120
-target-version = ["py310", "py311", "py312", "py313"]
+target-version = ["py310", "py311", "py312", "py313", "py314"]
 skip-string-normalization = true
 
 [tool.ruff]
@@ -90,5 +91,5 @@ exclude_lines = [
 ]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build" 

@@ -9,10 +9,10 @@ help:           ## Show this help (default)
 	@grep -F -h "##" $(MAKEFILE_LIST) | grep -F -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
 install:        ## Install dependencies
-	poetry sync
+	uv sync
 
 update:         ## Update dependencies
-	poetry update
+	uv sync --update
 
 all:            ## Run a whole CI pipeline: formatters, linters, tests
 	make lint test
