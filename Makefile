@@ -12,7 +12,7 @@ install:        ## Install dependencies
 	uv sync
 
 update:         ## Update dependencies
-	uv sync --update
+	uv sync -U
 
 all:            ## Run a whole CI pipeline: formatters, linters, tests
 	make lint test

@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- Added support for Python 3.14.
+
+### Fixed
+
+- Fixed MessagePack decoder reading only 1 byte for varint-encoded message length.
+- Fixed `KeyError` in `_on_completion_message` when server sends a completion for an untracked invocation ID.
+- Fixed `_stream_handlers` entries not being cleaned up on stream completion (memory leak).
+- Fixed invalid string fallback `'close'` for `MessageType` IntEnum in JSON protocol `parse_message`.
+- Fixed `MessagepackProtocol.encode()` raising `TypeError` by passing a `deque` to `msgpack.packb` instead of a `list`.
+
 ## [1.3.0] - 2025-04-29
 
 ## Changed

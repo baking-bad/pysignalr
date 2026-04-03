@@ -185,7 +185,7 @@ class JSONProtocol(Protocol):
         Returns:
             Message: The resulting Message object.
         """
-        message_type = MessageType(dict_message.pop('type', 'close'))
+        message_type = MessageType(dict_message.pop('type', MessageType.close.value))
 
         if message_type is MessageType.invocation:
             dict_message['invocation_id'] = dict_message.pop('invocationId', None)

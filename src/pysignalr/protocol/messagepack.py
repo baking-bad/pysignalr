@@ -70,11 +70,12 @@ class MessagepackProtocol(Protocol):
             list[Message]: A list of Message objects.
         """
         messages: list[Message] = []
+        data: bytes = raw_message.encode() if isinstance(raw_message, str) else raw_message
         offset = 0
-        while offset < len(raw_message):
-            length = msgpack.unpackb(raw_message[offset : offset + 1])
-            values = msgpack.unpackb(raw_message[offset + 1 : offset + length + 1])
-            offset += length + 1
+        while offset < len(data):
+            length, offset = self._from_varint(data, offset)
+            values = msgpack.unpackb(data[offset : offset + length])
+            offset += length
             message = self.parse_message(values)
             messages.append(message)
         return messages
@@ -98,7 +99,7 @@ class MessagepackProtocol(Protocol):
                 else:
                     raw_message.append(getattr(message, attr))
 
-        encoded_message = cast('bytes', msgpack.packb(raw_message))
+        encoded_message = cast('bytes', msgpack.packb(list(raw_message)))
         varint_length = self._to_varint(len(encoded_message))
         return varint_length + encoded_message
 
@@ -170,6 +171,28 @@ class MessagepackProtocol(Protocol):
             return CloseMessage(*msg[1:])
         else:
             raise NotImplementedError
+
+    def _from_varint(self, data: bytes, offset: int) -> tuple[int, int]:
+        """
+        Decodes a variable-length integer from data starting at offset.
+
+        Args:
+            data (bytes): The data containing the varint.
+            offset (int): The starting offset.
+
+        Returns:
+            tuple[int, int]: The decoded integer and the new offset after the varint.
+        """
+        length = 0
+        shift = 0
+        while True:
+            byte = data[offset]
+            offset += 1
+            length |= (byte & 0x7F) << shift
+            shift += 7
+            if not (byte & 0x80):
+                break
+        return length, offset
 
     def _to_varint(self, value: int) -> bytes:
         """

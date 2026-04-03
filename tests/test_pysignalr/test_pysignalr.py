@@ -60,7 +60,11 @@ async def aspnet_server() -> str:
     )
     atexit.register(container.stop)
     container.reload()
-    ip = cast('str', container.attrs['NetworkSettings']['IPAddress'])
+    network_settings = container.attrs['NetworkSettings']
+    ip = network_settings.get('IPAddress') or next(
+        iter(network_settings['Networks'].values())
+    )['IPAddress']
+    ip = cast('str', ip)
 
     logging.info('Waiting for server to start')
     wait_for_server(f'http://{ip}/api/auth/login')
@@ -318,3 +322,141 @@ class TestPysignalr:
         # Log detailed messages received
         for user, message in received_messages:
             logging.info('Detailed Log: Message from %s - %s', user, message)
+
+    # --- helpers for scenario tests ---
+
+    @staticmethod
+    def _get_token(aspnet_server: str) -> str:
+        login_url = f'http://{aspnet_server}/api/auth/login'
+        response = requests.post(login_url, json={'username': 'test', 'password': 'password'}, timeout=10)
+        token = response.json().get('token')
+        if not token:
+            pytest.fail('Failed to obtain token')
+        return cast('str', token)
+
+    @staticmethod
+    def _make_client(aspnet_server: str, token: str) -> SignalRClient:
+        url = f'http://{aspnet_server}/weatherHub'
+        return SignalRClient(url=url, access_token_factory=lambda: token)
+
+    # --- scenario tests ---
+
+    async def test_scenario_multiple_messages(self, aspnet_server: str) -> None:
+        """
+        Scenario: connect once, send three messages in a row, verify all received in order.
+        Covers multiple sequential invocations through a single connection.
+        """
+        token = self._get_token(aspnet_server)
+        client = self._make_client(aspnet_server, token)
+        sends = [('alice', 'first'), ('bob', 'second'), ('carol', 'third')]
+        received: list[tuple[str, str]] = []
+        task: asyncio.Task[None]
+
+        async def on_receive(arguments: Any) -> None:
+            received.append((arguments[0], arguments[1]))
+            if len(received) >= len(sends):
+                task.cancel()
+
+        client.on('ReceiveMessage', on_receive)
+        task = asyncio.create_task(client.run())
+
+        async def on_open() -> None:
+            for user, msg in sends:
+                await client.send('SendMessage', [user, msg])  # type: ignore[list-item]
+
+        client.on_open(on_open)
+        try:
+            with suppress(asyncio.CancelledError):
+                await asyncio.wait_for(task, timeout=30)
+        except asyncio.TimeoutError:
+            logging.error('Test timed out')
+            task.cancel()
+            await task
+
+        assert received == sends
+
+    async def test_scenario_group_join_and_message(self, aspnet_server: str) -> None:
+        """
+        Scenario: join a group, wait for the server join-notification, then send a
+        message to that group and verify receipt.
+        Covers multiple server round-trips (AddToGroup → SendMessageToGroup) in one connection.
+        """
+        token = self._get_token(aspnet_server)
+        client = self._make_client(aspnet_server, token)
+        received: list[tuple[str, str]] = []
+        task: asyncio.Task[None]
+
+        async def on_open() -> None:
+            await client.send('AddToGroup', ['testGroup'])  # type: ignore[list-item]
+
+        async def on_receive(arguments: Any) -> None:
+            user, msg = arguments
+            if user == 'System' and 'joined' in msg:
+                await client.send('SendMessageToGroup', ['testGroup', 'tester', 'hello group'])  # type: ignore[list-item]
+            elif user == 'tester':
+                received.append((user, msg))
+                task.cancel()
+
+        client.on_open(on_open)
+        client.on('ReceiveMessage', on_receive)
+        task = asyncio.create_task(client.run())
+        try:
+            with suppress(asyncio.CancelledError):
+                await asyncio.wait_for(task, timeout=30)
+        except asyncio.TimeoutError:
+            logging.error('Test timed out')
+            task.cancel()
+            await task
+
+        assert received == [('tester', 'hello group')]
+
+    async def test_scenario_two_clients_broadcast(self, aspnet_server: str) -> None:
+        """
+        Scenario: two independent clients connect; client A broadcasts a message;
+        both A and B must receive it.
+        Covers cross-client message delivery.
+        """
+        token = self._get_token(aspnet_server)
+        client_a = self._make_client(aspnet_server, token)
+        client_b = self._make_client(aspnet_server, token)
+        received_a: list[tuple[str, str]] = []
+        received_b: list[tuple[str, str]] = []
+        done = asyncio.Event()
+        b_ready = asyncio.Event()
+
+        async def on_open_b() -> None:
+            b_ready.set()
+
+        async def on_open_a() -> None:
+            await b_ready.wait()
+            await client_a.send('SendMessage', ['broadcaster', 'broadcast!'])  # type: ignore[list-item]
+
+        async def on_receive_a(arguments: Any) -> None:
+            received_a.append((arguments[0], arguments[1]))
+            if received_b:
+                done.set()
+
+        async def on_receive_b(arguments: Any) -> None:
+            received_b.append((arguments[0], arguments[1]))
+            if received_a:
+                done.set()
+
+        client_b.on_open(on_open_b)
+        client_a.on_open(on_open_a)
+        client_a.on('ReceiveMessage', on_receive_a)
+        client_b.on('ReceiveMessage', on_receive_b)
+
+        task_a = asyncio.create_task(client_a.run())
+        task_b = asyncio.create_task(client_b.run())
+
+        try:
+            await asyncio.wait_for(done.wait(), timeout=30)
+        except asyncio.TimeoutError:
+            logging.error('Test timed out')
+        finally:
+            task_a.cancel()
+            task_b.cancel()
+            await asyncio.gather(task_a, task_b, return_exceptions=True)
+
+        assert received_a == [('broadcaster', 'broadcast!')]
+        assert received_b == [('broadcaster', 'broadcast!')]
