@@ -171,17 +171,30 @@ with suppress(KeyboardInterrupt, asyncio.CancelledError):
 
 #### Parameters
 
-- `url` (str): The SignalR server URL.
-- `access_token_factory` (Callable[[], str], optional): A function that returns the access token.
-- `headers` (dict[str, str], optional): Additional headers to include in the WebSocket handshake.
+| Parameter | Type | Default | Description |
+| --------- | ---- | ------- | ----------- |
+| `url` | `str` | *required* | The SignalR server URL |
+| `protocol` | `Protocol \| None` | `JSONProtocol()` | Protocol for message encoding/decoding |
+| `headers` | `dict[str, str] \| None` | `None` | Additional headers for the WebSocket handshake |
+| `ping_interval` | `int` | `10` | Keepalive ping interval in seconds |
+| `connection_timeout` | `int` | `10` | Connection timeout in seconds |
+| `max_size` | `int \| None` | `1048576` | Maximum WebSocket message size (1 MB) |
+| `retry_sleep` | `float` | `1` | Initial retry delay in seconds |
+| `retry_multiplier` | `float` | `1.1` | Exponential backoff multiplier |
+| `retry_count` | `int` | `10` | Maximum number of retries |
+| `access_token_factory` | `Callable[[], str] \| None` | `None` | Function that returns an access token |
+| `ssl` | `ssl.SSLContext \| None` | `None` | Custom SSL context |
 
 #### Methods
 
-- `on_open(callback: Callable[[], Awaitable[None]])`: Set the callback for connection open event.
-- `on_close(callback: Callable[[], Awaitable[None]])`: Set the callback for connection close event.
-- `on_error(callback: Callable[[CompletionMessage], Awaitable[None]])`: Set the callback for error events.
-- `on(event: str, callback: Callable[[list[dict[str, Any]]], Awaitable[Any | None]])`: Set the callback for a specific event.
-- `send(method: str, args: list[Any])`: Send a message to the server.
+- `run()`: Run the client, managing the connection lifecycle.
+- `on(event, callback)`: Register a callback for a specific event. If the callback returns a value, it is sent back as a `CompletionMessage` (client results).
+- `on_open(callback)`: Register a callback for connection open events.
+- `on_close(callback)`: Register a callback for connection close events.
+- `on_error(callback)`: Register a callback for error events.
+- `send(method, arguments, on_invocation=None)`: Send a message to the server. Optionally provide a callback for the invocation response.
+- `stream(event, event_params, on_next=None, on_complete=None, on_error=None)`: Start a server-to-client streaming invocation.
+- `client_stream(target)`: Async context manager for client-to-server streaming. Use `await stream.send(item)` inside the context.
 
 ### `CompletionMessage`
 
@@ -189,7 +202,9 @@ A message received from the server upon completion of a method invocation.
 
 #### Attributes
 
-- `error` (str): The error message, if any.
+- `invocation_id` (`str`): The ID of the invocation.
+- `result` (`Any | None`): The result of the invocation, if any.
+- `error` (`str | None`): The error message, if the invocation failed.
 
 ## Contributors
 

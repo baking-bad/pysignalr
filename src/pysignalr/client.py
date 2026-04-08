@@ -357,7 +357,8 @@ class SignalRClient:
                 raise RuntimeError('Error callback is not set')
             await self._error_callback(message)
 
-        callback = self._invocation_handlers.pop(message.invocation_id)
+        self._stream_handlers.pop(message.invocation_id, None)
+        callback = self._invocation_handlers.pop(message.invocation_id, None)
         if callback is not None:
             await callback(message)
 

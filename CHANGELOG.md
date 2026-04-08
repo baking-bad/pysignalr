@@ -8,10 +8,21 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
+- Added support for Python 3.14.
 - Added `signalr_ping_interval` parameter to `SignalRClient` and `WebsocketTransport` (default: 15s, per `HubOptions.KeepAliveInterval`).
+
+### Fixed
+
+- Fixed MessagePack decoder reading only 1 byte for varint-encoded message length.
+- Fixed `KeyError` in `_on_completion_message` when server sends a completion for an untracked invocation ID.
+- Fixed `_stream_handlers` entries not being cleaned up on stream completion (memory leak).
+- Fixed invalid string fallback `'close'` for `MessageType` IntEnum in JSON protocol `parse_message`.
+- Fixed `MessagepackProtocol.encode()` raising `TypeError` by passing a `deque` to `msgpack.packb` instead of a `list`.
+- Fixed custom SSL context not being applied to the HTTP negotiation request (`aiohttp.ClientSession`).
 
 ### Changed
 
+- Updated `websockets` library to 16.0.
 - Changed default WebSocket `ping_interval` from 10s to 20s to match `websockets` library defaults.
 - Applied `connection_timeout` as `close_timeout` in WebSocket connections.
 

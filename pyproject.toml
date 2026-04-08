@@ -30,7 +30,7 @@ maintainers = [
     { name = "Lev Gorodetskii", email = "github@drsr.io" },
 ]
 dependencies = [
-    "websockets>=15.0.1,<16",
+    "websockets>=16.0,<17",
     "aiohttp",
     "msgpack",
     "orjson",

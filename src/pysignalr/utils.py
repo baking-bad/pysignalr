@@ -48,13 +48,13 @@ def get_negotiate_url(url: str) -> str:
     return parse.urlunsplit((scheme, netloc, path, query, fragment))
 
 
-def get_connection_url(url: str, id: list[str]) -> str:
+def get_connection_url(url: str, id: str) -> str:
     """
     Constructs the connection URL with the given connection ID.
 
     Args:
         url (str): The base SignalR endpoint URL.
-        id (list[str]): The connection ID.
+        id (str): The connection ID.
 
     Returns:
         str: The connection URL.
@@ -62,7 +62,7 @@ def get_connection_url(url: str, id: list[str]) -> str:
     scheme, netloc, path, query, fragment = parse.urlsplit(url)
 
     parsed_query = parse.parse_qs(query)
-    parsed_query['id'] = id
+    parsed_query['id'] = [id]
     query = parse.urlencode(parsed_query, doseq=True)
     with suppress(KeyError):
         scheme = http_to_ws[scheme]

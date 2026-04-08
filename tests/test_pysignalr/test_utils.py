@@ -42,5 +42,5 @@ class UtilsTest(TestCase):
         """
         url = 'http://localhost:8080/v1/events?foo=bar'
         self.assertEqual(
-            'ws://localhost:8080/v1/events?foo=bar&id=1&id=2&id=3', get_connection_url(url, ['1', '2', '3'])
+            'ws://localhost:8080/v1/events?foo=bar&id=123', get_connection_url(url, '123')
         )
