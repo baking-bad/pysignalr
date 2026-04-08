@@ -158,6 +158,10 @@ class TestOnStreamItemMessage:
         client._stream_handlers['inv-1'] = (None, None, None)
         await client._on_message(StreamItemMessage(invocation_id='inv-1', item='chunk'))
 
+    async def test_unknown_invocation_id_logs_warning(self) -> None:
+        client, _ = _make_client()
+        await client._on_message(StreamItemMessage(invocation_id='unknown', item='chunk'))
+
 
 class TestOnCancelInvocationMessage:
     async def test_routes_to_on_error(self) -> None:
@@ -167,6 +171,10 @@ class TestOnCancelInvocationMessage:
         msg = CancelInvocationMessage(invocation_id='inv-1')
         await client._on_message(msg)
         on_error.assert_called_once_with(msg)
+
+    async def test_unknown_invocation_id_logs_warning(self) -> None:
+        client, _ = _make_client()
+        await client._on_message(CancelInvocationMessage(invocation_id='unknown'))
 
 
 class TestOnCloseMessage:
@@ -293,6 +301,49 @@ class TestStreamErrorRouting:
         msg = CompletionMessage(invocation_id='inv-1', error='stream failed')
         with pytest.raises(RuntimeError):
             await client._on_message(msg)
+
+    async def test_stream_error_does_not_call_on_complete(self) -> None:
+        client, _ = _make_client()
+        on_complete = AsyncMock()
+        on_error = AsyncMock()
+        client._stream_handlers['inv-1'] = (None, on_complete, on_error)
+        client._invocation_handlers['inv-1'] = on_complete
+        msg = CompletionMessage(invocation_id='inv-1', error='stream failed')
+        await client._on_message(msg)
+        on_error.assert_called_once_with(msg)
+        on_complete.assert_not_called()
+
+
+class TestFalsyReturnValues:
+    async def test_callback_returns_zero(self) -> None:
+        client, send_mock = _make_client()
+        client.on('Compute', AsyncMock(return_value=0))
+        msg = InvocationMessage(invocation_id='abc', target='Compute', arguments=[])
+        await client._on_message(msg)
+        send_mock.assert_called_once()
+        sent = send_mock.call_args[0][0]
+        assert isinstance(sent, CompletionMessage)
+        assert sent.result == 0
+
+    async def test_callback_returns_false(self) -> None:
+        client, send_mock = _make_client()
+        client.on('Check', AsyncMock(return_value=False))
+        msg = InvocationMessage(invocation_id='abc', target='Check', arguments=[])
+        await client._on_message(msg)
+        send_mock.assert_called_once()
+        sent = send_mock.call_args[0][0]
+        assert isinstance(sent, CompletionMessage)
+        assert sent.result is False
+
+    async def test_callback_returns_empty_list(self) -> None:
+        client, send_mock = _make_client()
+        client.on('List', AsyncMock(return_value=[]))
+        msg = InvocationMessage(invocation_id='abc', target='List', arguments=[])
+        await client._on_message(msg)
+        send_mock.assert_called_once()
+        sent = send_mock.call_args[0][0]
+        assert isinstance(sent, CompletionMessage)
+        assert sent.result == []
 
 
 class TestSignalRClientMethods:

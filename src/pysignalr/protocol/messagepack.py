@@ -98,6 +98,8 @@ class MessagepackProtocol(Protocol):
                         raw_message.append(getattr(message, attr).value)
                     elif attr == 'headers':
                         raw_message.append(getattr(message, attr) or {})
+                    elif attr == 'stream_ids':
+                        raw_message.append(getattr(message, attr) or [])
                     else:
                         raw_message.append(getattr(message, attr))
 
@@ -157,7 +159,7 @@ class MessagepackProtocol(Protocol):
         message_type = MessageType(msg[0])
 
         if message_type is MessageType.invocation:
-            if len(msg[5]) > 0:
+            if len(msg) > 5 and len(msg[5]) > 0:
                 return InvocationClientStreamMessage(headers=msg[1], stream_ids=msg[5], target=msg[3], arguments=msg[4], invocation_id=msg[2])
             else:
                 return InvocationMessage(headers=msg[1], invocation_id=msg[2], target=msg[3], arguments=msg[4])

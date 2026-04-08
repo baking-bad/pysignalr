@@ -13,22 +13,17 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- Fixed SignalR Hub Protocol spec compliance in JSON and MessagePack codecs (`streamIds`, `invocationId`, `ResultKind`, headers, varint framing).
 - Fixed `Message.dump()` mutating the message instance.
 - Fixed `CompletionClientStreamMessage` using wrong message type.
-- Fixed `MessagepackProtocol.encode()` omitting `ResultKind` field for `CompletionMessage`.
-- Fixed MessagePack encoder sending `nil` for missing headers instead of an empty map per SignalR spec.
-- Fixed `invocation_id` being discarded for `InvocationClientStreamMessage`.
 - Fixed `send()` always generating `invocationId`, preventing non-blocking invocations.
-- Fixed `_on_completion_message` ignoring stream-specific `on_error` callbacks.
-- Fixed MessagePack decoder reading only 1 byte for varint-encoded message length.
-- Fixed invalid string fallback `'close'` for `MessageType` IntEnum in JSON protocol `parse_message`.
-- Fixed `MessagepackProtocol.encode()` raising `TypeError` by passing wrong type to `msgpack.packb`.
-- Fixed custom SSL context not being applied to the HTTP negotiation request.
-- Fixed JSON protocol not converting `invocationId` for `StreamInvocationMessage` and `CancelInvocationMessage`.
-- Fixed missing `streamIds` field in `StreamInvocationMessage` and `InvocationMessage`.
+- Fixed stream error routing: `on_complete` called after error, missing `on_error` fallback, `KeyError` on unknown invocation ID.
+- Fixed client results treating falsy return values (`0`, `False`, `[]`) as missing.
+- Fixed custom SSL context not being applied to HTTP negotiation.
 
 ### Changed
 
+- Switched build tooling from Poetry to uv.
 - Updated `websockets` library to 16.0.
 - Changed default WebSocket `ping_interval` from 10s to 20s to match `websockets` library defaults.
 - Applied `connection_timeout` as `close_timeout` in WebSocket connections.

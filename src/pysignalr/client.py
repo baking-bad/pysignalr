@@ -345,7 +345,7 @@ class SignalRClient:
         for callback in callbacks:
             try:
                 res = await callback(message.arguments)
-                if res:
+                if res is not None:
                     if invocation_id is not None:
                         await self._transport.send(CompletionMessage(invocation_id=invocation_id, result=res))
                     else:
@@ -398,9 +398,9 @@ class SignalRClient:
             else:
                 raise RuntimeError('Error callback is not set')
 
-        self._stream_handlers.pop(message.invocation_id, None)
+        had_stream = self._stream_handlers.pop(message.invocation_id, None) is not None
         callback = self._invocation_handlers.pop(message.invocation_id, None)
-        if callback is not None:
+        if callback is not None and not (message.error and had_stream):
             await callback(message)
 
     async def _on_stream_item_message(self, message: StreamItemMessage) -> None:
@@ -410,7 +410,11 @@ class SignalRClient:
         Args:
             message (StreamItemMessage): The stream item message from the server.
         """
-        callback, _, _ = self._stream_handlers[message.invocation_id]
+        handler = self._stream_handlers.get(message.invocation_id)
+        if handler is None:
+            _logger.warning("StreamItem received for unknown invocation '%s'.", message.invocation_id)
+            return
+        callback, _, _ = handler
         if callback:
             await callback(message.item)
 
@@ -421,7 +425,11 @@ class SignalRClient:
         Args:
             message (CancelInvocationMessage): The cancel invocation message from the server.
         """
-        _, _, callback = self._stream_handlers[message.invocation_id]
+        handler = self._stream_handlers.get(message.invocation_id)
+        if handler is None:
+            _logger.warning("CancelInvocation received for unknown invocation '%s'.", message.invocation_id)
+            return
+        _, _, callback = handler
         if callback:
             await callback(message)  # type: ignore[arg-type]
 

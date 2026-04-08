@@ -190,6 +190,15 @@ class TestMessagepackDecode:
         assert isinstance(msg, InvocationClientStreamMessage)
         assert msg.invocation_id == 'inv-1'
 
+    def test_decode_invocation_without_stream_ids(self) -> None:
+        proto = MessagepackProtocol()
+        raw = _pack([1, {}, 'inv-1', 'Target', [42]])
+        msgs = proto.decode(raw)
+        msg = msgs[0]
+        assert isinstance(msg, InvocationMessage)
+        assert msg.invocation_id == 'inv-1'
+        assert msg.arguments == [42]
+
     def test_encode_decode_ping_roundtrip(self) -> None:
         proto = MessagepackProtocol()
         encoded = proto.encode(PingMessage())
