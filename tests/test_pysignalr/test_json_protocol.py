@@ -6,6 +6,7 @@ from pysignalr.messages import CancelInvocationMessage
 from pysignalr.messages import CloseMessage
 from pysignalr.messages import CompletionMessage
 from pysignalr.messages import HandshakeResponseMessage
+from pysignalr.messages import InvocationClientStreamMessage
 from pysignalr.messages import InvocationMessage
 from pysignalr.messages import MessageType
 from pysignalr.messages import PingMessage
@@ -91,6 +92,16 @@ class TestJSONProtocolDecode:
         assert isinstance(msg, CloseMessage)
         assert msg.error == 'hub closed'
         assert msg.allow_reconnect is True
+
+    def test_decode_invocation_with_stream_ids_preserves_invocation_id(self) -> None:
+        proto = JSONProtocol()
+        raw = f'{{"type":1,"invocationId":"inv-1","target":"Upload","arguments":[],"streamIds":["s1"]}}{SEP}'
+        msgs = proto.decode(raw)
+        assert len(msgs) == 1
+        msg = msgs[0]
+        assert isinstance(msg, InvocationClientStreamMessage)
+        assert msg.invocation_id == 'inv-1'
+        assert msg.stream_ids == ['s1']
 
     def test_decode_bytes_input(self) -> None:
         proto = JSONProtocol()

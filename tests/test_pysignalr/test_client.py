@@ -247,6 +247,50 @@ class TestOnInvocationMessageExtra:
         send_mock.assert_not_called()
 
 
+class TestSendNonBlocking:
+    async def test_send_without_callback_has_no_invocation_id(self) -> None:
+        client, send_mock = _make_client()
+        await client.send('Fire', [])
+        sent = send_mock.call_args[0][0]
+        assert isinstance(sent, InvocationMessage)
+        assert sent.invocation_id is None
+
+    async def test_send_with_callback_has_invocation_id(self) -> None:
+        client, send_mock = _make_client()
+        await client.send('Compute', [], on_invocation=AsyncMock())
+        sent = send_mock.call_args[0][0]
+        assert isinstance(sent, InvocationMessage)
+        assert sent.invocation_id is not None
+
+
+class TestStreamErrorRouting:
+    async def test_completion_error_routes_to_stream_on_error(self) -> None:
+        client, _ = _make_client()
+        on_error = AsyncMock()
+        client._stream_handlers['inv-1'] = (None, None, on_error)
+        client._invocation_handlers['inv-1'] = None
+        msg = CompletionMessage(invocation_id='inv-1', error='stream failed')
+        await client._on_message(msg)
+        on_error.assert_called_once_with(msg)
+
+    async def test_completion_error_falls_back_to_global_when_stream_on_error_none(self) -> None:
+        client, _ = _make_client()
+        global_cb = AsyncMock()
+        client.on_error(global_cb)
+        client._stream_handlers['inv-1'] = (None, None, None)
+        client._invocation_handlers['inv-1'] = None
+        msg = CompletionMessage(invocation_id='inv-1', error='stream failed')
+        await client._on_message(msg)
+        global_cb.assert_called_once_with(msg)
+
+    async def test_completion_error_no_stream_no_global_raises(self) -> None:
+        client, _ = _make_client()
+        client._stream_handlers['inv-1'] = (None, None, None)
+        msg = CompletionMessage(invocation_id='inv-1', error='stream failed')
+        with pytest.raises(RuntimeError):
+            await client._on_message(msg)
+
+
 class TestSignalRClientMethods:
     async def test_on_close_registers_callback(self) -> None:
         client, _ = _make_client()

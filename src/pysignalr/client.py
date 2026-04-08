@@ -204,9 +204,11 @@ class SignalRClient:
             arguments (list[dict[str, Any]]): The arguments to pass to the method.
             on_invocation (MessageCallback | None): Optional callback for the invocation response.
         """
-        invocation_id = str(uuid.uuid4())
+        invocation_id: str | None = None
+        if on_invocation is not None:
+            invocation_id = str(uuid.uuid4())
+            self._invocation_handlers[invocation_id] = on_invocation
         message = InvocationMessage(invocation_id, method, arguments, self._headers)
-        self._invocation_handlers[invocation_id] = on_invocation
         await self._transport.send(message)
 
     async def stream(
@@ -351,9 +353,19 @@ class SignalRClient:
             message (CompletionMessage): The completion message.
         """
         if message.error:
-            if self._error_callback is None:
+            stream_handler = self._stream_handlers.get(message.invocation_id)
+            if stream_handler is not None:
+                _, _, on_error = stream_handler
+                if on_error is not None:
+                    await on_error(message)
+                elif self._error_callback is not None:
+                    await self._error_callback(message)
+                else:
+                    raise RuntimeError('Error callback is not set')
+            elif self._error_callback is not None:
+                await self._error_callback(message)
+            else:
                 raise RuntimeError('Error callback is not set')
-            await self._error_callback(message)
 
         self._stream_handlers.pop(message.invocation_id, None)
         callback = self._invocation_handlers.pop(message.invocation_id, None)

@@ -88,18 +88,31 @@ class MessagepackProtocol(Protocol):
         Returns:
             bytes: The raw representation of the message.
         """
-        raw_message: list[Any] = []
-
-        for attr in _attribute_priority:
-            if hasattr(message, attr):
-                if attr == 'type_':
-                    raw_message.append(getattr(message, attr).value)
-                else:
-                    raw_message.append(getattr(message, attr))
+        if isinstance(message, CompletionMessage):
+            raw_message = self._encode_completion(message)
+        else:
+            raw_message = []
+            for attr in _attribute_priority:
+                if hasattr(message, attr):
+                    if attr == 'type_':
+                        raw_message.append(getattr(message, attr).value)
+                    elif attr == 'headers':
+                        raw_message.append(getattr(message, attr) or {})
+                    else:
+                        raw_message.append(getattr(message, attr))
 
         encoded_message = cast('bytes', msgpack.packb(raw_message))
         varint_length = self._to_varint(len(encoded_message))
         return varint_length + encoded_message
+
+    def _encode_completion(self, message: CompletionMessage) -> list[Any]:
+        headers = message.headers or {}
+        if message.error is not None:
+            return [MessageType.completion.value, headers, message.invocation_id, 1, message.error]
+        elif message.result is not None:
+            return [MessageType.completion.value, headers, message.invocation_id, 3, message.result]
+        else:
+            return [MessageType.completion.value, headers, message.invocation_id, 2]
 
     def decode_handshake(self, raw_message: str | bytes) -> tuple[HandshakeResponseMessage, Iterable[Message]]:
         """
@@ -145,7 +158,7 @@ class MessagepackProtocol(Protocol):
 
         if message_type is MessageType.invocation:
             if len(msg[5]) > 0:
-                return InvocationClientStreamMessage(headers=msg[1], stream_ids=msg[5], target=msg[3], arguments=msg[4])
+                return InvocationClientStreamMessage(headers=msg[1], stream_ids=msg[5], target=msg[3], arguments=msg[4], invocation_id=msg[2])
             else:
                 return InvocationMessage(headers=msg[1], invocation_id=msg[2], target=msg[3], arguments=msg[4])
         elif message_type is MessageType.stream_item:

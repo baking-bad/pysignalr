@@ -192,7 +192,6 @@ class JSONProtocol(Protocol):
             dict_message['invocation_id'] = dict_message.pop('invocationId', None)
             stream_ids = dict_message.pop('streamIds', None)
             if stream_ids:
-                dict_message.pop('invocation_id', None)
                 dict_message['stream_ids'] = stream_ids
                 return InvocationClientStreamMessage(**dict_message)
             return InvocationMessage(**dict_message)

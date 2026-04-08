@@ -92,7 +92,7 @@ class Message:
         Returns:
             dict[str, Any]: The dictionary representation of the message.
         """
-        data = self.__dict__
+        data = dict(self.__dict__)
 
         invocation_id = data.pop('invocation_id', None)
         stream_ids = data.pop('stream_ids', None)
@@ -151,7 +151,7 @@ class CloseMessage(Message, type_=MessageType.close):
 
 
 @dataclass
-class CompletionClientStreamMessage(Message, type_=MessageType.stream_item):
+class CompletionClientStreamMessage(Message, type_=MessageType.completion):
     """
     Completion client stream message.
 
@@ -233,6 +233,7 @@ class InvocationClientStreamMessage(Message, type_=MessageType.invocation):
     target: str
     arguments: Any
     headers: dict[str, Any] | None = None
+    invocation_id: str | None = None
 
 
 @dataclass
