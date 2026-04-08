@@ -17,7 +17,8 @@
 2. [Basic Usage](#basic-usage)
 3. [Usage with Token Authentication](#usage-with-token-authentication)
 4. [API Reference](#api-reference)
-5. [License](#license)
+5. [Contributors](#contributors)
+6. [License](#license)
 
 ## Installation
 
@@ -58,10 +59,11 @@ async def on_message(message: list[dict[str, Any]]) -> None:
 
 
 async def on_client_result(message: list[dict[str, Any]]) -> str:
-    """
-    The server can request a result from a client.
-    This requires the server to use ISingleClientProxy.InvokeAsync and the client to return a result from its .On handler.
-    https://learn.microsoft.com/en-us/aspnet/core/signalr/hubs?view=aspnetcore-9.0#client-results
+    """The server can request a result from a client.
+
+    Requires the server to use ISingleClientProxy.InvokeAsync and the client
+    to return a result from its .On handler.
+    See: https://learn.microsoft.com/en-us/aspnet/core/signalr/hubs?view=aspnetcore-9.0#client-results
     """
     print(f'Received message: {message}')
     return 'reply'
@@ -121,10 +123,11 @@ async def on_message(message: list[dict[str, Any]]) -> None:
 
 
 async def on_client_result(message: list[dict[str, Any]]) -> str:
-    """
-    The server can request a result from a client.
-    This requires the server to use ISingleClientProxy.InvokeAsync and the client to return a result from its .On handler.
-    https://learn.microsoft.com/en-us/aspnet/core/signalr/hubs?view=aspnetcore-9.0#client-results
+    """The server can request a result from a client.
+
+    Requires the server to use ISingleClientProxy.InvokeAsync and the client
+    to return a result from its .On handler.
+    See: https://learn.microsoft.com/en-us/aspnet/core/signalr/hubs?view=aspnetcore-9.0#client-results
     """
     print(f'Received message: {message}')
     return 'reply'
@@ -202,6 +205,16 @@ A message received from the server upon completion of a method invocation.
 - `invocation_id` (`str`): The ID of the invocation.
 - `result` (`Any | None`): The result of the invocation, if any.
 - `error` (`str | None`): The error message, if the invocation failed.
+
+## Contributors
+
+- [Lev Gorodetskii](https://github.com/droserasprout)
+- [Ola Lidholm](https://github.com/olalid)
+- [ciaranby](https://github.com/ciaranby)
+- [MichaelMKKelly](https://github.com/MichaelMKKelly)
+- [Wizard1209](https://github.com/Wizard1209)
+- Antonino Bonanno
+- Caio Barbieri
 
 ## License
 
