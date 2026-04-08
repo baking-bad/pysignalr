@@ -29,6 +29,7 @@ from pysignalr.transport.websocket import DEFAULT_PING_INTERVAL
 from pysignalr.transport.websocket import DEFAULT_RETRY_COUNT
 from pysignalr.transport.websocket import DEFAULT_RETRY_MULTIPLIER
 from pysignalr.transport.websocket import DEFAULT_RETRY_SLEEP
+from pysignalr.transport.websocket import DEFAULT_SIGNALR_PING_INTERVAL
 from pysignalr.transport.websocket import WebsocketTransport
 
 if TYPE_CHECKING:
@@ -108,6 +109,7 @@ class SignalRClient:
         protocol: Protocol | None = None,
         headers: dict[str, str] | None = None,
         ping_interval: int = DEFAULT_PING_INTERVAL,
+        signalr_ping_interval: int = DEFAULT_SIGNALR_PING_INTERVAL,
         connection_timeout: int = DEFAULT_CONNECTION_TIMEOUT,
         max_size: int | None = DEFAULT_MAX_SIZE,
         retry_sleep: float = DEFAULT_RETRY_SLEEP,
@@ -134,6 +136,7 @@ class SignalRClient:
             callback=self._on_message,
             headers=self._headers,
             ping_interval=ping_interval,
+            signalr_ping_interval=signalr_ping_interval,
             retry_sleep=retry_sleep,
             retry_multiplier=retry_multiplier,
             retry_count=retry_count,

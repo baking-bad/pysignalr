@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- Added `signalr_ping_interval` parameter to `SignalRClient` and `WebsocketTransport` (default: 15s, per `HubOptions.KeepAliveInterval`).
+
+### Changed
+
+- Changed default WebSocket `ping_interval` from 10s to 20s to match `websockets` library defaults.
+- Applied `connection_timeout` as `close_timeout` in WebSocket connections.
+
 ## [1.3.0] - 2025-04-29
 
 ## Changed
