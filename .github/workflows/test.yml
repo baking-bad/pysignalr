@@ -1,5 +1,5 @@
 name: Test
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 on:
@@ -14,11 +14,30 @@ on:
 jobs:
   test:
     name: Test
+    runs-on: macos-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install project
+        run: make install
+      - name: Run lint
+        run: uv run make lint
+      - name: Run tests
+        run: uv run make test
+
+  test-full:
+    name: Test (full matrix)
+    if: github.ref == 'refs/heads/master'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-          # Architectures
           - os: ubuntu-latest
             arch: amd64
             python-version: '3.14'
@@ -28,10 +47,6 @@ jobs:
           - os: macos-latest
             arch: amd64
             python-version: '3.14'
-          - os: macos-latest
-            arch: arm64
-            python-version: '3.14'
-          # Python versions
           - os: ubuntu-latest
             arch: amd64
             python-version: '3.13'
