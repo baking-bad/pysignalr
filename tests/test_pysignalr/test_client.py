@@ -4,12 +4,18 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from pysignalr.client import ClientStream
 from pysignalr.client import SignalRClient
 from pysignalr.exceptions import ServerError
 from pysignalr.messages import CancelInvocationMessage
 from pysignalr.messages import CloseMessage
+from pysignalr.messages import CompletionClientStreamMessage
 from pysignalr.messages import CompletionMessage
+from pysignalr.messages import InvocationClientStreamMessage
 from pysignalr.messages import InvocationMessage
+from pysignalr.messages import MessageType
+from pysignalr.messages import PingMessage
+from pysignalr.messages import StreamInvocationMessage
 from pysignalr.messages import StreamItemMessage
 
 
@@ -159,3 +165,89 @@ class TestOnCloseMessage:
     async def test_without_error_no_raise(self) -> None:
         client, _ = _make_client()
         await client._on_message(CloseMessage())
+
+
+class TestClientStream:
+    async def test_send(self) -> None:
+        transport_mock = AsyncMock()
+        stream = ClientStream(transport_mock, 'Upload')
+        await stream.send('item-1')
+        sent = transport_mock.send.call_args[0][0]
+        assert isinstance(sent, StreamItemMessage)
+        assert sent.item == 'item-1'
+
+    async def test_invoke(self) -> None:
+        transport_mock = AsyncMock()
+        stream = ClientStream(transport_mock, 'Upload')
+        await stream.invoke()
+        sent = transport_mock.send.call_args[0][0]
+        assert isinstance(sent, InvocationClientStreamMessage)
+        assert sent.target == 'Upload'
+
+    async def test_complete(self) -> None:
+        transport_mock = AsyncMock()
+        stream = ClientStream(transport_mock, 'Upload')
+        await stream.complete()
+        sent = transport_mock.send.call_args[0][0]
+        assert isinstance(sent, CompletionClientStreamMessage)
+
+
+class TestClientStreamContextManager:
+    async def test_client_stream_context(self) -> None:
+        client, send_mock = _make_client()
+        async with client.client_stream('Upload') as stream:
+            assert isinstance(stream, ClientStream)
+            # invoke() was called on enter
+            invoke_msg = send_mock.call_args[0][0]
+            assert isinstance(invoke_msg, InvocationClientStreamMessage)
+        # complete() was called on exit
+        complete_msg = send_mock.call_args[0][0]
+        assert isinstance(complete_msg, CompletionClientStreamMessage)
+
+
+class TestOnMessage:
+    async def test_ping_message_ignored(self) -> None:
+        client, send_mock = _make_client()
+        await client._on_message(PingMessage())
+        send_mock.assert_not_called()
+
+    async def test_stream_invocation_message_ignored(self) -> None:
+        client, send_mock = _make_client()
+        await client._on_message(StreamInvocationMessage(invocation_id='inv-1', target='Foo', arguments=[]))
+        send_mock.assert_not_called()
+
+    async def test_invocation_binding_failure_raises(self) -> None:
+        client, _ = _make_client()
+        msg = InvocationMessage(invocation_id='inv-1', target='Foo', arguments=[])
+        msg.type = MessageType.invocation_binding_failure  # type: ignore[attr-defined]
+        with pytest.raises(ServerError):
+            await client._on_message(msg)
+
+
+class TestOnInvocationMessageExtra:
+    async def test_callback_returns_result_no_response_expected(self) -> None:
+        """Callback returns value but invocation_id=None -> warning, nothing sent."""
+        client, send_mock = _make_client()
+        client.on('Greet', AsyncMock(return_value='hello'))
+        await client._on_message(InvocationMessage(invocation_id=None, target='Greet', arguments=[]))  # type: ignore[arg-type]
+        send_mock.assert_not_called()
+
+
+class TestSignalRClientMethods:
+    async def test_on_close_registers_callback(self) -> None:
+        client, _ = _make_client()
+        cb = AsyncMock()
+        client.on_close(cb)
+        assert client._transport._close_callback is cb
+
+    async def test_stream_sends_stream_invocation(self) -> None:
+        client, send_mock = _make_client()
+        on_next = AsyncMock()
+        on_complete = AsyncMock()
+        on_error = AsyncMock()
+        await client.stream('Counter', ['5'], on_next=on_next, on_complete=on_complete, on_error=on_error)
+        sent = send_mock.call_args[0][0]
+        assert isinstance(sent, StreamInvocationMessage)
+        assert sent.target == 'Counter'
+        # Handlers registered
+        assert len(client._stream_handlers) == 1
