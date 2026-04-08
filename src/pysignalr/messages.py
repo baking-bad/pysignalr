@@ -107,26 +107,12 @@ class Message:
 
 
 @dataclass
-class ResponseMessage(Message, type_=MessageType._):
-    """
-    Response message.
-
-    Attributes:
-        error (str | None): The error message.
-        result (Any | None): The result of the message.
-    """
-
-    error: str | None
-    result: Any | None
-
-
-@dataclass
 class CancelInvocationMessage(Message, type_=MessageType.cancel_invocation):
     """
-    Cancel invocation message.
+    Sent by the client to cancel a streaming invocation on the server.
 
     Attributes:
-        invocation_id (str): The ID of the invocation to cancel.
+        invocation_id (str): The ID of the streaming invocation to cancel.
         headers (dict[str, Any] | None): Optional headers.
     """
 
@@ -137,11 +123,11 @@ class CancelInvocationMessage(Message, type_=MessageType.cancel_invocation):
 @dataclass
 class CloseMessage(Message, type_=MessageType.close):
     """
-    Close message.
+    Sent by the server to indicate the connection is being closed.
 
     Attributes:
-        error (str | None): Optional error message.
-        allow_reconnect (bool | None): Whether reconnection is allowed.
+        error (str | None): The reason for closing, if it was due to an error.
+        allow_reconnect (bool | None): Whether the client is allowed to reconnect.
         headers (dict[str, Any] | None): Optional headers.
     """
 
@@ -153,10 +139,10 @@ class CloseMessage(Message, type_=MessageType.close):
 @dataclass
 class CompletionClientStreamMessage(Message, type_=MessageType.completion):
     """
-    Completion client stream message.
+    Sent by the client to signal the end of a client-to-server stream.
 
     Attributes:
-        invocation_id (str): The ID of the invocation.
+        invocation_id (str): The ID of the streaming invocation to complete.
         headers (dict[str, Any] | None): Optional headers.
     """
 
@@ -167,12 +153,14 @@ class CompletionClientStreamMessage(Message, type_=MessageType.completion):
 @dataclass
 class CompletionMessage(Message, type_=MessageType.completion):
     """
-    Completion message.
+    Sent by the server to indicate the completion of a method invocation or stream.
+
+    Only optional fields that are present are included in the serialized output.
 
     Attributes:
         invocation_id (str): The ID of the invocation.
-        result (Any | None): The result of the invocation.
-        error (str | None): The error message if the invocation failed.
+        result (Any | None): The result of the invocation, if successful.
+        error (str | None): The error message, if the invocation failed.
         headers (dict[str, Any] | None): Optional headers.
     """
 
@@ -201,13 +189,17 @@ class CompletionMessage(Message, type_=MessageType.completion):
 @dataclass
 class InvocationMessage(Message, type_=MessageType.invocation):
     """
-    Invocation message.
+    Invocation message requesting a method call on the remote peer.
+
+    When `invocation_id` is `None` the invocation is fire-and-forget
+    (non-blocking) and the server will not send a `CompletionMessage`.
 
     Attributes:
-        invocation_id (str): The ID of the invocation.
+        invocation_id (str | None): The ID of the invocation, or None for non-blocking calls.
         target (str): The target method name.
-        arguments: The arguments for the method invocation.
+        arguments (Any): The arguments for the method invocation.
         headers (dict[str, Any] | None): Optional headers.
+        stream_ids (list[str] | None): IDs of client-to-server streams attached to this invocation.
     """
 
     invocation_id: str | None
@@ -220,13 +212,16 @@ class InvocationMessage(Message, type_=MessageType.invocation):
 @dataclass
 class InvocationClientStreamMessage(Message, type_=MessageType.invocation):
     """
-    Invocation client stream message.
+    Invocation message with attached client-to-server streams.
+
+    Distinguished from `InvocationMessage` by the presence of `stream_ids`.
 
     Attributes:
-        stream_ids (list[str]): The stream IDs.
+        stream_ids (list[str]): The IDs of client-to-server streams.
         target (str): The target method name.
-        arguments: The arguments for the method invocation.
+        arguments (Any): The arguments for the method invocation.
         headers (dict[str, Any] | None): Optional headers.
+        invocation_id (str | None): The ID of the invocation, if the server expects a response.
     """
 
     stream_ids: list[str]
@@ -248,13 +243,17 @@ class PingMessage(Message, type_=MessageType.ping):
 @dataclass
 class StreamInvocationMessage(Message, type_=MessageType.stream_invocation):
     """
-    Stream invocation message.
+    Requests a server-to-client streaming invocation.
+
+    The server responds with zero or more `StreamItemMessage` followed by
+    a `CompletionMessage`.
 
     Attributes:
-        invocation_id (str): The ID of the invocation.
+        invocation_id (str): The ID of the streaming invocation.
         target (str): The target method name.
-        arguments: The arguments for the method invocation.
+        arguments (Any): The arguments for the method invocation.
         headers (dict[str, Any] | None): Optional headers.
+        stream_ids (list[str] | None): IDs of client-to-server streams attached to this invocation.
     """
 
     invocation_id: str
@@ -267,11 +266,11 @@ class StreamInvocationMessage(Message, type_=MessageType.stream_invocation):
 @dataclass
 class StreamItemMessage(Message, type_=MessageType.stream_item):
     """
-    Stream item message.
+    A single item in a server-to-client or client-to-server stream.
 
     Attributes:
-        invocation_id (str): The ID of the invocation.
-        item: The stream item.
+        invocation_id (str): The ID of the streaming invocation this item belongs to.
+        item (Any): The stream item payload.
         headers (dict[str, Any] | None): Optional headers.
     """
 
@@ -282,10 +281,10 @@ class StreamItemMessage(Message, type_=MessageType.stream_item):
 
 class JSONMessage(Message, type_=MessageType._):
     """
-    JSON message used in BaseJSONProtocol to skip pysignalr-specific things.
+    Raw JSON message wrapper used by `BaseJSONProtocol` to bypass typed message parsing.
 
     Attributes:
-        data (dict[str, Any]): The JSON data.
+        data (dict[str, Any]): The raw JSON payload.
     """
 
     def __init__(self, data: dict[str, Any]) -> None:

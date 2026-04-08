@@ -13,6 +13,7 @@ from pysignalr.messages import CompletionClientStreamMessage
 from pysignalr.messages import CompletionMessage
 from pysignalr.messages import InvocationClientStreamMessage
 from pysignalr.messages import InvocationMessage
+from pysignalr.messages import Message
 from pysignalr.messages import MessageType
 from pysignalr.messages import PingMessage
 from pysignalr.messages import StreamInvocationMessage
@@ -30,6 +31,12 @@ class _FakeBindingFailure:
     """Mimics a message with invocation_binding_failure type that is not any known subclass."""
 
     type = MessageType.invocation_binding_failure
+
+
+class _UnhandledMessage(Message, type_=MessageType._):
+    """A Message subclass not handled by _on_message."""
+
+    pass
 
 
 class TestOnInvocationMessage:
@@ -230,10 +237,7 @@ class TestOnMessage:
     async def test_unknown_message_type_raises(self) -> None:
         """A message that matches no isinstance branch raises NotImplementedError."""
         client, _ = _make_client()
-        # ResponseMessage is a Message subclass but not handled by _on_message
-        from pysignalr.messages import ResponseMessage
-
-        msg = ResponseMessage(error=None, result=None)
+        msg = _UnhandledMessage()
         with pytest.raises(NotImplementedError):
             await client._on_message(msg)
 
