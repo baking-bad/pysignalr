@@ -197,8 +197,10 @@ class JSONProtocol(Protocol):
             dict_message['invocation_id'] = dict_message.pop('invocationId', None)
             return CompletionMessage(**dict_message)
         elif message_type is MessageType.stream_invocation:
+            dict_message['invocation_id'] = dict_message.pop('invocationId', None)
             return StreamInvocationMessage(**dict_message)
         elif message_type is MessageType.cancel_invocation:
+            dict_message['invocation_id'] = dict_message.pop('invocationId', None)
             return CancelInvocationMessage(**dict_message)
         elif message_type is MessageType.ping:
             return PingMessage()

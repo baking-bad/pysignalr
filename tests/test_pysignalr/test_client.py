@@ -26,6 +26,12 @@ def _make_client() -> tuple[SignalRClient, AsyncMock]:
     return client, send_mock
 
 
+class _FakeBindingFailure:
+    """Mimics a message with invocation_binding_failure type that is not any known subclass."""
+
+    type = MessageType.invocation_binding_failure
+
+
 class TestOnInvocationMessage:
     async def test_no_handler_no_response(self) -> None:
         """Unregistered event without invocation_id → warning only, nothing sent."""
@@ -198,11 +204,9 @@ class TestClientStreamContextManager:
         async with client.client_stream('Upload') as stream:
             assert isinstance(stream, ClientStream)
             # invoke() was called on enter
-            invoke_msg = send_mock.call_args[0][0]
-            assert isinstance(invoke_msg, InvocationClientStreamMessage)
+            assert isinstance(send_mock.call_args_list[0][0][0], InvocationClientStreamMessage)
         # complete() was called on exit
-        complete_msg = send_mock.call_args[0][0]
-        assert isinstance(complete_msg, CompletionClientStreamMessage)
+        assert isinstance(send_mock.call_args_list[1][0][0], CompletionClientStreamMessage)
 
 
 class TestOnMessage:
@@ -217,10 +221,20 @@ class TestOnMessage:
         send_mock.assert_not_called()
 
     async def test_invocation_binding_failure_raises(self) -> None:
+        """A message with invocation_binding_failure type raises ServerError."""
         client, _ = _make_client()
-        msg = InvocationMessage(invocation_id='inv-1', target='Foo', arguments=[])
-        msg.type = MessageType.invocation_binding_failure  # type: ignore[attr-defined]
+        msg = _FakeBindingFailure()
         with pytest.raises(ServerError):
+            await client._on_message(msg)  # type: ignore[arg-type]
+
+    async def test_unknown_message_type_raises(self) -> None:
+        """A message that matches no isinstance branch raises NotImplementedError."""
+        client, _ = _make_client()
+        # ResponseMessage is a Message subclass but not handled by _on_message
+        from pysignalr.messages import ResponseMessage
+
+        msg = ResponseMessage(error=None, result=None)
+        with pytest.raises(NotImplementedError):
             await client._on_message(msg)
 
 

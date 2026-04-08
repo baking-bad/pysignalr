@@ -27,7 +27,7 @@ from pysignalr.transport.websocket import WebsocketTransport
 def _response_mock(status: int = 200, json_data: dict[str, Any] | None = None) -> MagicMock:
     response = MagicMock()
     response.status = status
-    response.json = AsyncMock(return_value=json_data or {'connectionId': 'test-id'})
+    response.json = AsyncMock(return_value=json_data if json_data is not None else {'connectionId': 'test-id'})
     response.__aenter__ = AsyncMock(return_value=response)
     response.__aexit__ = AsyncMock(return_value=False)
     return response
@@ -135,16 +135,6 @@ class TestNegotiateSSL:
             with pytest.raises(ServerError):
                 await client._transport._negotiate()
 
-    async def test_negotiate_server_connection_error_raises_negotiation_failure(self) -> None:
-        """ServerConnectionError during negotiate in _loop raises NegotiationFailure."""
-        transport = _make_transport()
-
-        async def raise_server_connection_error() -> None:
-            raise ServerConnectionError()
-
-        with patch.object(transport, '_negotiate', side_effect=raise_server_connection_error):
-            with pytest.raises(NegotiationFailure):
-                await transport._loop()
 
 
 def _make_transport(**kwargs: Any) -> WebsocketTransport:
@@ -186,7 +176,7 @@ class TestSetState:
     async def test_connected_from_disconnected_raises(self) -> None:
         transport = _make_transport()
         # State starts as disconnected; going directly to connected is invalid
-        with pytest.raises(RuntimeError, match='Cannot connect while not connecting'):
+        with pytest.raises(RuntimeError, match='Cannot connect while not connecting or reconnecting'):
             await transport._set_state(ConnectionState.connected)
 
     async def test_reconnecting_calls_close_callback(self) -> None:
@@ -213,6 +203,11 @@ class TestSetState:
         await transport._set_state(ConnectionState.disconnected)
         # No error, no state change
 
+    async def test_invalid_state_raises_not_implemented(self) -> None:
+        transport = _make_transport()
+        with pytest.raises(NotImplementedError):
+            await transport._set_state(MagicMock())
+
 
 class TestGetConnection:
     async def test_timeout_raises_runtime_error(self) -> None:
@@ -224,6 +219,17 @@ class TestGetConnection:
         transport = _make_transport()
         transport._connected.set()
         transport._ws = None
+        with pytest.raises(RuntimeError, match='closed'):
+            await transport._get_connection()
+
+    async def test_ws_not_open_raises_runtime_error(self) -> None:
+        from websockets.protocol import State
+
+        transport = _make_transport()
+        transport._connected.set()
+        mock_ws = MagicMock()
+        mock_ws.state = State.CLOSED
+        transport._ws = mock_ws
         with pytest.raises(RuntimeError, match='closed'):
             await transport._get_connection()
 
@@ -262,6 +268,14 @@ class TestHandshake:
 
 
 class TestLoop:
+    async def test_server_connection_error_raises_negotiation_failure(self) -> None:
+        """ServerConnectionError during negotiate in _loop raises NegotiationFailure."""
+        transport = _make_transport()
+
+        with patch.object(transport, '_negotiate', side_effect=ServerConnectionError()):
+            with pytest.raises(NegotiationFailure):
+                await transport._loop()
+
     async def test_connection_closed_triggers_reconnect(self) -> None:
         transport = _make_transport(skip_negotiation=True)
         transport._ssl = None
@@ -294,7 +308,7 @@ class TestLoop:
         with patch('pysignalr.transport.websocket.connect', return_value=FakeConnectIter()), \
              patch.object(transport, '_handshake', new_callable=AsyncMock), \
              patch.object(transport, '_set_state', side_effect=tracking_set_state), \
-             patch('asyncio.gather', side_effect=fake_gather):
+             patch('pysignalr.transport.websocket.asyncio.gather', side_effect=fake_gather):
             await transport._loop()
 
         assert ConnectionState.reconnecting in states_seen
