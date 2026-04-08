@@ -1,55 +1,56 @@
-# CLAUDE.md
+# pysignalr
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Async SignalR client built on `websockets` and `aiohttp`.
 
 ## Commands
 
 ```bash
 make install      # Install dependencies with uv
-make lint         # Run black + ruff + mypy (strict)
-make test         # Run pytest with coverage
+make lint         # black + ruff + mypy (strict)
+make test         # pytest with coverage
 make all          # lint + test
 
-# Individual tools
-make black        # Format
-make ruff         # Lint/fix
-make mypy         # Type-check
-
-# Run a single test
+# Single test
 pytest --asyncio-mode=auto -s -v tests/test_pysignalr/test_pysignalr.py::test_name
 ```
 
 ## Architecture
 
-The library is an async SignalR client built on `websockets` and `aiohttp`.
+**Client**: `SignalRClient` (`src/pysignalr/client.py`) — user-facing API wrapping transport + message routing.
 
-**Entry point**: `SignalRClient` (`src/pysignalr/client.py`) — user-facing API. Wraps `WebsocketTransport` and routes incoming messages to registered callbacks.
+**Transport** (`src/pysignalr/transport/`):
 
-**Transport layer** (`src/pysignalr/transport/`):
+- `WebsocketTransport` — full lifecycle: HTTP negotiation (aiohttp), WS handshake, reconnect with exponential backoff, keepalive pings, message dispatch. Supports standard and Azure SignalR negotiation.
+- `BaseWebsocketTransport` — simplified subclass, no handshake/keepalive.
 
-- `WebsocketTransport` manages the full lifecycle: HTTP negotiation (via `aiohttp`), WebSocket handshake, reconnection with exponential backoff, keepalive pings, and message dispatch.
-- `BaseWebsocketTransport` subclass disables handshake and keepalive for simplified use cases.
-- Negotiation supports both standard SignalR and Azure SignalR redirects.
+**Protocol** (`src/pysignalr/protocol/`):
 
-**Protocol layer** (`src/pysignalr/protocol/`):
+- `JSONProtocol` (default) — orjson, record separator `\x1e`.
+- `MessagePackProtocol` — msgpack, varint-prefixed length frames.
 
-- `Protocol` (abstract) defines `encode`, `decode`, `decode_handshake`.
-- `JSONProtocol` — default, uses `orjson`, record separator `\x1e`.
-- `MessagePackProtocol` — binary alternative using `msgpack`.
+**Messages** (`src/pysignalr/messages.py`): Dataclass hierarchy rooted at `Message`. Subclasses register via `__init_subclass__(type_=...)`. `dump()` → camelCase dict.
 
-**Messages** (`src/pysignalr/messages.py`): Dataclass hierarchy rooted at `Message`. Each subclass registers its `MessageType` via `__init_subclass__(type_=...)`. `dump()` serializes to dict with camelCase keys (`invocationId`, `streamIds`).
+**Flow**: raw bytes → `Protocol.decode()` → `Message` → `WebsocketTransport._callback` → `SignalRClient._on_message()` → handler callbacks.
 
-**Message flow**: raw bytes → `Protocol.decode()` → `Message` subclass → `WebsocketTransport._callback` → `SignalRClient._on_message()` → registered handler callbacks.
+**Streaming**: server→client (`client.stream()`), client→server (`client.client_stream()` context manager), client results (callback return value → `CompletionMessage`).
 
-**Streaming patterns**:
-
-- Server→client streaming: `client.stream()` with `on_next`/`on_complete`/`on_error` callbacks.
-- Client→server streaming: `async with client.client_stream(target) as stream:` context manager.
-- Client results: `client.on(event, callback)` where callback returns a value — sent back as `CompletionMessage`.
+**Backoff** (`src/pysignalr/__init__.py`): `__aiter__` with reset on success, exponential growth on failure, cap at `BACKOFF_MAX`. `TimeoutError`/`InvalidHandshake` → `NegotiationFailure`.
 
 ## Tests
 
-- `test_client.py` — unit tests for `SignalRClient._on_message()` routing logic (no network, uses `AsyncMock`).
-- `test_messagepack.py` — unit tests for `MessagepackProtocol` encode/decode and varint helpers.
-- `test_utils.py` — unit tests for URL helpers.
-- `test_pysignalr.py` — integration tests requiring Docker (spins up `AspNetAuthExample` container). Skipped automatically when Docker is unavailable.
+- `test_client.py` — unit tests for `_on_message()` routing (AsyncMock, no network)
+- `test_transport.py` — unit tests for transport (SSL, negotiate, backoff)
+- `test_backoff.py` — unit tests for backoff logic
+- `test_messagepack.py` — MessagePack encode/decode + varint helpers
+- `test_utils.py` — URL helpers
+- `test_pysignalr.py` — integration tests (Docker, AspNetAuthExample container, auto-skipped without Docker)
+
+Hub methods available: `SendMessage`, `AddToGroup`, `SendMessageToGroup`, `GetCurrentTime` on `weatherHub`.
+
+## Gotchas
+
+**Docker IP lookup**: On Docker Desktop/rootless, `container.attrs['NetworkSettings']['IPAddress']` is empty. Fall back to `NetworkSettings['Networks'][<first_network>]['IPAddress']`.
+
+**Patching `asyncio.sleep`**: Patch the module-local reference (`pysignalr.asyncio.sleep` or `pysignalr.transport.websocket.asyncio.sleep`), not the global.
+
+**Stopping retry loops in tests**: Raise `asyncio.CancelledError` (a `BaseException`) from a mock — not caught by `except Exception`, cleanly terminates the loop.
