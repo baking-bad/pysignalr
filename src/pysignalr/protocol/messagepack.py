@@ -160,7 +160,8 @@ class MessagepackProtocol(Protocol):
             else:
                 raise NotImplementedError
         elif message_type is MessageType.stream_invocation:
-            return StreamInvocationMessage(headers=msg[1], invocation_id=msg[2], target=msg[3], arguments=msg[4])
+            stream_ids = msg[5] if len(msg) > 5 else None
+            return StreamInvocationMessage(headers=msg[1], invocation_id=msg[2], target=msg[3], arguments=msg[4], stream_ids=stream_ids or None)
         elif message_type is MessageType.cancel_invocation:
             return CancelInvocationMessage(headers=msg[1], invocation_id=msg[2])
         elif message_type is MessageType.ping:

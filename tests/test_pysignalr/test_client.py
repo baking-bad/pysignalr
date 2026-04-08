@@ -36,7 +36,7 @@ class TestOnInvocationMessage:
     async def test_no_handler_no_response(self) -> None:
         """Unregistered event without invocation_id → warning only, nothing sent."""
         client, send_mock = _make_client()
-        await client._on_message(InvocationMessage(invocation_id=None, target='Unknown', arguments=[]))  # type: ignore[arg-type]
+        await client._on_message(InvocationMessage(invocation_id=None, target='Unknown', arguments=[]))
         send_mock.assert_not_called()
 
     async def test_no_handler_expects_response(self) -> None:
@@ -75,7 +75,7 @@ class TestOnInvocationMessage:
         client, _ = _make_client()
         client.on('Greet', AsyncMock(side_effect=ValueError('boom')))
         with pytest.raises(ValueError, match='boom'):
-            await client._on_message(InvocationMessage(invocation_id=None, target='Greet', arguments=[]))  # type: ignore[arg-type]
+            await client._on_message(InvocationMessage(invocation_id=None, target='Greet', arguments=[]))
 
     async def test_callback_returns_result(self) -> None:
         """Callback returns a value with invocation_id → sends CompletionMessage with result."""
@@ -243,7 +243,7 @@ class TestOnInvocationMessageExtra:
         """Callback returns value but invocation_id=None -> warning, nothing sent."""
         client, send_mock = _make_client()
         client.on('Greet', AsyncMock(return_value='hello'))
-        await client._on_message(InvocationMessage(invocation_id=None, target='Greet', arguments=[]))  # type: ignore[arg-type]
+        await client._on_message(InvocationMessage(invocation_id=None, target='Greet', arguments=[]))
         send_mock.assert_not_called()
 
 

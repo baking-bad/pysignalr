@@ -290,28 +290,26 @@ class SignalRClient:
         Args:
             message (InvocationMessage): The invocation message.
         """
-        expects_response = message.invocation_id is not None
+        invocation_id = message.invocation_id
         callbacks = [callback for callback in self._message_handlers[message.target] if callback]
 
         if not callbacks:
-            # There are no callbacks for the message.target
             _logger.warning("No client method with the name '%s' found.", message.target)
-            if expects_response:
+            if invocation_id is not None:
                 _logger.error(
                     "No result given for '%s' method and invocation ID '%s'.",
                     message.target,
-                    message.invocation_id,
+                    invocation_id,
                 )
                 await self._transport.send(
-                    CompletionMessage(invocation_id=message.invocation_id, error="Client didn't provide a result.")
+                    CompletionMessage(invocation_id=invocation_id, error="Client didn't provide a result.")
                 )
             return None
 
-        if expects_response and len(callbacks) > 1:
-            # There are multiple callbacks, so multiple results for the message.target
+        if invocation_id is not None and len(callbacks) > 1:
             _logger.error("Multiple results provided for '%s'. Sending error to server.", message.target)
             await self._transport.send(
-                CompletionMessage(invocation_id=message.invocation_id, error='Client provided multiple results.')
+                CompletionMessage(invocation_id=invocation_id, error='Client provided multiple results.')
             )
             return None
 
@@ -319,29 +317,29 @@ class SignalRClient:
             try:
                 res = await callback(message.arguments)
                 if res:
-                    if expects_response:
-                        await self._transport.send(CompletionMessage(invocation_id=message.invocation_id, result=res))
+                    if invocation_id is not None:
+                        await self._transport.send(CompletionMessage(invocation_id=invocation_id, result=res))
                     else:
                         _logger.warning(
                             "Result given for '%s' method but server is not expecting a result.", message.target
                         )
-                elif expects_response:
+                elif invocation_id is not None:
                     _logger.error(
                         "No result given for '%s' method and invocation ID '%s'.",
                         message.target,
-                        message.invocation_id,
+                        invocation_id,
                     )
                     await self._transport.send(
                         CompletionMessage(
-                            invocation_id=message.invocation_id,
+                            invocation_id=invocation_id,
                             error="Client didn't provide a result.",
                         )
                     )
             except Exception as exc:
                 _logger.error("A callback for the method '%s' threw error '%s'.", message.target, exc)
-                if not expects_response:
+                if invocation_id is None:
                     raise exc
-                await self._transport.send(CompletionMessage(invocation_id=message.invocation_id, error=str(exc)))
+                await self._transport.send(CompletionMessage(invocation_id=invocation_id, error=str(exc)))
 
         return None
 

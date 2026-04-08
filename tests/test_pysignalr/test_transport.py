@@ -276,6 +276,7 @@ class TestLoop:
             with pytest.raises(NegotiationFailure):
                 await transport._loop()
 
+    @pytest.mark.filterwarnings('ignore::RuntimeWarning')
     async def test_connection_closed_triggers_reconnect(self) -> None:
         transport = _make_transport(skip_negotiation=True)
         transport._ssl = None

@@ -210,10 +210,11 @@ class InvocationMessage(Message, type_=MessageType.invocation):
         headers (dict[str, Any] | None): Optional headers.
     """
 
-    invocation_id: str
+    invocation_id: str | None
     target: str
     arguments: Any
     headers: dict[str, Any] | None = None
+    stream_ids: list[str] | None = None
 
 
 @dataclass
@@ -259,6 +260,7 @@ class StreamInvocationMessage(Message, type_=MessageType.stream_invocation):
     target: str
     arguments: Any
     headers: dict[str, Any] | None = None
+    stream_ids: list[str] | None = None
 
 
 @dataclass
