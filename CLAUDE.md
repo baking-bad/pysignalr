@@ -38,10 +38,12 @@ pytest --asyncio-mode=auto -s -v tests/test_pysignalr/test_pysignalr.py::test_na
 
 ## Tests
 
-- `test_client.py` — unit tests for `_on_message()` routing (AsyncMock, no network)
-- `test_transport.py` — unit tests for transport (SSL, negotiate, backoff)
+- `test_client.py` — unit tests for `_on_message()` routing, `send()`, `stream()`, `client_stream()`, error routing (AsyncMock, no network)
+- `test_transport.py` — unit tests for transport (SSL, negotiate, backoff, state machine, keepalive, handshake, `_loop`)
 - `test_backoff.py` — unit tests for backoff logic
-- `test_messagepack.py` — MessagePack encode/decode + varint helpers
+- `test_messagepack.py` — MessagePack encode/decode + varint helpers + `CompletionMessage` roundtrips
+- `test_json_protocol.py` — JSON protocol encode/decode + handshake + all message types
+- `test_messages.py` — `Message.dump()` idempotency, camelCase conversion, `streamIds`/`invocationId` handling
 - `test_utils.py` — URL helpers
 - `test_pysignalr.py` — integration tests (Docker, AspNetAuthExample container, auto-skipped without Docker)
 

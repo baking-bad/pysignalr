@@ -192,7 +192,7 @@ with suppress(KeyboardInterrupt, asyncio.CancelledError):
 - `on_open(callback)`: Register a callback for connection open events.
 - `on_close(callback)`: Register a callback for connection close events.
 - `on_error(callback)`: Register a callback for error events.
-- `send(method, arguments, on_invocation=None)`: Send a message to the server. Optionally provide a callback for the invocation response.
+- `send(method, arguments, on_invocation=None)`: Send a message to the server. Without `on_invocation`, sends a non-blocking (fire-and-forget) invocation. With a callback, tracks the invocation and routes the server's completion response to it.
 - `stream(event, event_params, on_next=None, on_complete=None, on_error=None)`: Start a server-to-client streaming invocation.
 - `client_stream(target)`: Async context manager for client-to-server streaming. Use `await stream.send(item)` inside the context.
 
@@ -202,7 +202,7 @@ A message received from the server upon completion of a method invocation.
 
 #### Attributes
 
-- `invocation_id` (`str`): The ID of the invocation.
+- `invocation_id` (`str | None`): The ID of the invocation.
 - `result` (`Any | None`): The result of the invocation, if any.
 - `error` (`str | None`): The error message, if the invocation failed.
 
