@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-# TODO: Refactor this module
-from collections import deque
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
@@ -90,7 +88,7 @@ class MessagepackProtocol(Protocol):
         Returns:
             bytes: The raw representation of the message.
         """
-        raw_message: deque[Any] = deque()
+        raw_message: list[Any] = []
 
         for attr in _attribute_priority:
             if hasattr(message, attr):
@@ -99,7 +97,7 @@ class MessagepackProtocol(Protocol):
                 else:
                     raw_message.append(getattr(message, attr))
 
-        encoded_message = cast('bytes', msgpack.packb(list(raw_message)))
+        encoded_message = cast('bytes', msgpack.packb(raw_message))
         varint_length = self._to_varint(len(encoded_message))
         return varint_length + encoded_message
 
