@@ -49,14 +49,17 @@ _logger = logging.getLogger('pysignalr.client')
 
 class ClientStream:
     """
-    Client to server streaming implementation.
-    Refer to https://docs.microsoft.com/en-gb/aspnet/core/signalr/streaming?view=aspnetcore-5.0#client-to-server-streaming
-    for more information.
+    Client-to-server streaming handle.
+
+    Created via `SignalRClient.client_stream()` context manager. Use `send()`
+    to push items and let the context manager handle `invoke()`/`complete()`.
+
+    See https://learn.microsoft.com/en-us/aspnet/core/signalr/streaming#client-to-server-streaming
 
     Attributes:
-        transport (Transport): The transport used to send stream items.
+        transport (Transport): The transport used to send stream messages.
         target (str): The target method name on the server.
-        invocation_id (str): The unique identifier for the stream.
+        invocation_id (str): The unique identifier for this stream.
     """
 
     def __init__(self, transport: Transport, target: str) -> None:
@@ -66,41 +69,48 @@ class ClientStream:
 
     async def send(self, item: Any) -> None:
         """
-        Sends the next item to the server.
+        Sends the next stream item to the server.
 
         Args:
-            item (Any): The item to send.
+            item (Any): The item payload to send.
         """
         await self.transport.send(StreamItemMessage(self.invocation_id, item))
 
     async def invoke(self) -> None:
         """
-        Starts the streaming process.
+        Sends the `InvocationClientStreamMessage` to start the stream on the server.
         """
         await self.transport.send(InvocationClientStreamMessage([self.invocation_id], self.target, []))
 
     async def complete(self) -> None:
         """
-        Completes the streaming process.
+        Sends a `CompletionClientStreamMessage` to signal the end of the stream.
         """
         await self.transport.send(CompletionClientStreamMessage(self.invocation_id))
 
 
 class SignalRClient:
     """
-    SignalRClient is a client for SignalR that manages connections, sends messages,
-    and handles incoming messages.
+    Async SignalR client.
 
-    Attributes:
-        url (str): The URL of the SignalR server.
-        protocol (Protocol): The protocol used for message encoding/decoding.
-        headers (dict[str, str]): Optional HTTP headers to include in the WebSocket handshake.
-        access_token_factory (Callable[[], str] | None): A factory function to provide access tokens.
-        _message_handlers (defaultdict[str, list[MessageCallback | None]]): Handlers for different message types.
-        _stream_handlers (dict[str, tuple[MessageCallback | None, MessageCallback | None, CompletionMessageCallback | None]]): Handlers for stream messages.
-        _invocation_handlers (dict[str, MessageCallback | None]): Handlers for invocation messages.
-        _transport (WebsocketTransport): The transport used for WebSocket communication.
-        _error_callback (CompletionMessageCallback | None): Callback for error messages.
+    Wraps a `WebsocketTransport` and routes decoded messages to user-registered
+    callbacks.  Supports server-to-client streaming (`stream()`), client-to-server
+    streaming (`client_stream()`), and client results (returning a value from
+    an `on()` callback).
+
+    Args:
+        url (str): The SignalR hub URL (http/https; upgraded to ws/wss for the connection).
+        protocol (Protocol | None): Message protocol. Defaults to `JSONProtocol`.
+        headers (dict[str, str] | None): Extra HTTP headers included in the WebSocket handshake.
+        ping_interval (int): WebSocket-level ping interval in seconds.
+        signalr_ping_interval (int): SignalR-level keepalive ping interval in seconds.
+        connection_timeout (int): Timeout in seconds waiting for the WebSocket connection.
+        max_size (int | None): Maximum WebSocket frame size in bytes (`None` for unlimited).
+        retry_sleep (float): Initial delay in seconds between reconnection attempts.
+        retry_multiplier (float): Exponential backoff multiplier applied to `retry_sleep`.
+        retry_count (int): Maximum number of consecutive reconnection attempts.
+        access_token_factory (Callable[[], str] | None): Called before each connection to obtain a bearer token for the `Authorization` header.
+        ssl (ssl.SSLContext | None): Custom SSL context for both HTTP negotiation and the WebSocket connection.
     """
 
     def __init__(
@@ -155,11 +165,14 @@ class SignalRClient:
 
     def on(self, event: str, callback: AnyCallback) -> None:
         """
-        Registers a callback function for a specific event.
+        Registers a callback for a hub method invocation.
+
+        If the callback returns a value and the invocation has an `invocation_id`,
+        the result is sent back to the server as a `CompletionMessage` (client results).
 
         Args:
-            event (str): The event name.
-            callback (AnyCallback): The callback function.
+            event (str): The hub method name to listen for.
+            callback (AnyCallback): Async callable invoked with the message arguments.
         """
         self._message_handlers[event].append(callback)
 
@@ -183,10 +196,13 @@ class SignalRClient:
 
     def on_error(self, callback: CompletionMessageCallback) -> None:
         """
-        Registers a callback function to be called when an error occurs.
+        Registers a global error callback invoked on `CompletionMessage` errors.
+
+        Stream-specific `on_error` callbacks (from `stream()`) take priority;
+        this callback is used as a fallback when no stream-specific handler exists.
 
         Args:
-            callback (CompletionMessageCallback): The callback function.
+            callback (CompletionMessageCallback): Async callable receiving the error message.
         """
         self._error_callback = callback
 
@@ -197,16 +213,22 @@ class SignalRClient:
         on_invocation: MessageCallback | None = None,
     ) -> None:
         """
-        Sends a message to the server.
+        Invokes a hub method on the server.
+
+        Without `on_invocation` this is a fire-and-forget call (no `invocationId`).
+        With a callback, an `invocationId` is generated and the server's
+        `CompletionMessage` response is routed to the callback.
 
         Args:
-            method (str): The method name to invoke on the server.
+            method (str): The hub method name to invoke.
             arguments (list[dict[str, Any]]): The arguments to pass to the method.
-            on_invocation (MessageCallback | None): Optional callback for the invocation response.
+            on_invocation (MessageCallback | None): Optional callback for the completion response.
         """
-        invocation_id = str(uuid.uuid4())
+        invocation_id: str | None = None
+        if on_invocation is not None:
+            invocation_id = str(uuid.uuid4())
+            self._invocation_handlers[invocation_id] = on_invocation
         message = InvocationMessage(invocation_id, method, arguments, self._headers)
-        self._invocation_handlers[invocation_id] = on_invocation
         await self._transport.send(message)
 
     async def stream(
@@ -218,14 +240,17 @@ class SignalRClient:
         on_error: CompletionMessageCallback | None = None,
     ) -> None:
         """
-        Starts a streaming invocation.
+        Starts a server-to-client streaming invocation.
+
+        The server responds with zero or more `StreamItemMessage` routed to
+        `on_next`, followed by a `CompletionMessage` routed to `on_complete`.
 
         Args:
-            event (str): The event name to stream.
-            event_params (list[str]): The parameters for the event.
-            on_next (MessageCallback | None): Optional callback for each stream item.
-            on_complete (MessageCallback | None): Optional callback when the stream is completed.
-            on_error (CompletionMessageCallback | None): Optional callback for errors.
+            event (str): The hub method name to stream from.
+            event_params (list[str]): The arguments for the streaming method.
+            on_next (MessageCallback | None): Called with each stream item's payload.
+            on_complete (MessageCallback | None): Called on the final `CompletionMessage`.
+            on_error (CompletionMessageCallback | None): Called on error; falls back to global `on_error`.
         """
         invocation_id = str(uuid.uuid4())
         message = StreamInvocationMessage(invocation_id, event, event_params, self._headers)
@@ -251,10 +276,10 @@ class SignalRClient:
 
     async def _on_message(self, message: Message) -> None:
         """
-        Handles incoming messages and routes them to the appropriate handlers.
+        Main message dispatcher; routes decoded messages to type-specific handlers.
 
         Args:
-            message (Message): The incoming message.
+            message (Message): The decoded message from the transport layer.
         """
         if message.type == MessageType.invocation_binding_failure:  # type: ignore[attr-defined]
             raise ServerError(str(message))
@@ -285,111 +310,137 @@ class SignalRClient:
 
     async def _on_invocation_message(self, message: InvocationMessage) -> None:
         """
-        Handles invocation messages.
+        Handles a server-initiated hub method invocation.
+
+        Looks up registered `on()` callbacks for `message.target`. If the server
+        expects a response (`invocation_id is not None`), sends back a
+        `CompletionMessage` with the callback's return value or error.
 
         Args:
-            message (InvocationMessage): The invocation message.
+            message (InvocationMessage): The invocation message from the server.
         """
-        expects_response = message.invocation_id is not None
+        invocation_id = message.invocation_id
         callbacks = [callback for callback in self._message_handlers[message.target] if callback]
 
         if not callbacks:
-            # There are no callbacks for the message.target
             _logger.warning("No client method with the name '%s' found.", message.target)
-            if expects_response:
+            if invocation_id is not None:
                 _logger.error(
                     "No result given for '%s' method and invocation ID '%s'.",
                     message.target,
-                    message.invocation_id,
+                    invocation_id,
                 )
                 await self._transport.send(
-                    CompletionMessage(invocation_id=message.invocation_id, error="Client didn't provide a result.")
+                    CompletionMessage(invocation_id=invocation_id, error="Client didn't provide a result.")
                 )
             return None
 
-        if expects_response and len(callbacks) > 1:
-            # There are multiple callbacks, so multiple results for the message.target
+        if invocation_id is not None and len(callbacks) > 1:
             _logger.error("Multiple results provided for '%s'. Sending error to server.", message.target)
             await self._transport.send(
-                CompletionMessage(invocation_id=message.invocation_id, error='Client provided multiple results.')
+                CompletionMessage(invocation_id=invocation_id, error='Client provided multiple results.')
             )
             return None
 
         for callback in callbacks:
             try:
                 res = await callback(message.arguments)
-                if res:
-                    if expects_response:
-                        await self._transport.send(CompletionMessage(invocation_id=message.invocation_id, result=res))
+                if res is not None:
+                    if invocation_id is not None:
+                        await self._transport.send(CompletionMessage(invocation_id=invocation_id, result=res))
                     else:
                         _logger.warning(
                             "Result given for '%s' method but server is not expecting a result.", message.target
                         )
-                elif expects_response:
+                elif invocation_id is not None:
                     _logger.error(
                         "No result given for '%s' method and invocation ID '%s'.",
                         message.target,
-                        message.invocation_id,
+                        invocation_id,
                     )
                     await self._transport.send(
                         CompletionMessage(
-                            invocation_id=message.invocation_id,
+                            invocation_id=invocation_id,
                             error="Client didn't provide a result.",
                         )
                     )
             except Exception as exc:
                 _logger.error("A callback for the method '%s' threw error '%s'.", message.target, exc)
-                if not expects_response:
+                if invocation_id is None:
                     raise exc
-                await self._transport.send(CompletionMessage(invocation_id=message.invocation_id, error=str(exc)))
+                await self._transport.send(CompletionMessage(invocation_id=invocation_id, error=str(exc)))
 
         return None
 
     async def _on_completion_message(self, message: CompletionMessage) -> None:
         """
-        Handles completion messages.
+        Handles a completion message from the server.
+
+        On error: routes to the stream-specific `on_error` if the invocation is a
+        stream, otherwise to the global `on_error` callback.  Cleans up stream and
+        invocation handler entries regardless of success or failure.
 
         Args:
-            message (CompletionMessage): The completion message.
+            message (CompletionMessage): The completion message from the server.
         """
         if message.error:
-            if self._error_callback is None:
+            stream_handler = self._stream_handlers.get(message.invocation_id)
+            if stream_handler is not None:
+                _, _, on_error = stream_handler
+                if on_error is not None:
+                    await on_error(message)
+                elif self._error_callback is not None:
+                    await self._error_callback(message)
+                else:
+                    raise RuntimeError('Error callback is not set')
+            elif self._error_callback is not None:
+                await self._error_callback(message)
+            else:
                 raise RuntimeError('Error callback is not set')
-            await self._error_callback(message)
 
-        self._stream_handlers.pop(message.invocation_id, None)
+        had_stream = self._stream_handlers.pop(message.invocation_id, None) is not None
         callback = self._invocation_handlers.pop(message.invocation_id, None)
-        if callback is not None:
+        if callback is not None and not (message.error and had_stream):
             await callback(message)
 
     async def _on_stream_item_message(self, message: StreamItemMessage) -> None:
         """
-        Handles stream item messages.
+        Forwards a stream item to the `on_next` callback registered via `stream()`.
 
         Args:
-            message (StreamItemMessage): The stream item message.
+            message (StreamItemMessage): The stream item message from the server.
         """
-        callback, _, _ = self._stream_handlers[message.invocation_id]
+        handler = self._stream_handlers.get(message.invocation_id)
+        if handler is None:
+            _logger.warning("StreamItem received for unknown invocation '%s'.", message.invocation_id)
+            return
+        callback, _, _ = handler
         if callback:
             await callback(message.item)
 
     async def _on_cancel_invocation_message(self, message: CancelInvocationMessage) -> None:
         """
-        Handles cancel invocation messages.
+        Handles a cancel invocation message by forwarding it to the stream's `on_error` callback.
 
         Args:
-            message (CancelInvocationMessage): The cancel invocation message.
+            message (CancelInvocationMessage): The cancel invocation message from the server.
         """
-        _, _, callback = self._stream_handlers[message.invocation_id]
+        handler = self._stream_handlers.get(message.invocation_id)
+        if handler is None:
+            _logger.warning("CancelInvocation received for unknown invocation '%s'.", message.invocation_id)
+            return
+        _, _, callback = handler
         if callback:
             await callback(message)  # type: ignore[arg-type]
 
     async def _on_close_message(self, message: CloseMessage) -> None:
         """
-        Handles close messages.
+        Handles a close message from the server.
+
+        Raises `ServerError` if the close message contains an error.
 
         Args:
-            message (CloseMessage): The close message.
+            message (CloseMessage): The close message from the server.
         """
         if message.error:
             raise ServerError(message.error)

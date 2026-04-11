@@ -12,6 +12,7 @@ from pysignalr.messages import CompletionMessage  # 3
 from pysignalr.messages import HandshakeMessage
 from pysignalr.messages import HandshakeRequestMessage
 from pysignalr.messages import HandshakeResponseMessage
+from pysignalr.messages import InvocationClientStreamMessage  # 1 (with streamIds)
 from pysignalr.messages import InvocationMessage  # 1
 from pysignalr.messages import JSONMessage  # virtual
 from pysignalr.messages import Message
@@ -189,6 +190,10 @@ class JSONProtocol(Protocol):
 
         if message_type is MessageType.invocation:
             dict_message['invocation_id'] = dict_message.pop('invocationId', None)
+            stream_ids = dict_message.pop('streamIds', None)
+            if stream_ids:
+                dict_message['stream_ids'] = stream_ids
+                return InvocationClientStreamMessage(**dict_message)
             return InvocationMessage(**dict_message)
         elif message_type is MessageType.stream_item:
             dict_message['invocation_id'] = dict_message.pop('invocationId', None)
@@ -197,8 +202,11 @@ class JSONProtocol(Protocol):
             dict_message['invocation_id'] = dict_message.pop('invocationId', None)
             return CompletionMessage(**dict_message)
         elif message_type is MessageType.stream_invocation:
+            dict_message['invocation_id'] = dict_message.pop('invocationId', None)
+            dict_message['stream_ids'] = dict_message.pop('streamIds', None)
             return StreamInvocationMessage(**dict_message)
         elif message_type is MessageType.cancel_invocation:
+            dict_message['invocation_id'] = dict_message.pop('invocationId', None)
             return CancelInvocationMessage(**dict_message)
         elif message_type is MessageType.ping:
             return PingMessage()

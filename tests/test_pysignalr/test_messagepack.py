@@ -182,12 +182,72 @@ class TestMessagepackDecode:
         assert isinstance(msgs[0], InvocationMessage)
         assert msgs[0].arguments[0] == big_arg
 
+    def test_decode_invocation_client_stream_preserves_invocation_id(self) -> None:
+        proto = MessagepackProtocol()
+        raw = _pack([1, {}, 'inv-1', 'Target', [], ['stream-1']])
+        msgs = proto.decode(raw)
+        msg = msgs[0]
+        assert isinstance(msg, InvocationClientStreamMessage)
+        assert msg.invocation_id == 'inv-1'
+
+    def test_decode_invocation_without_stream_ids(self) -> None:
+        proto = MessagepackProtocol()
+        raw = _pack([1, {}, 'inv-1', 'Target', [42]])
+        msgs = proto.decode(raw)
+        msg = msgs[0]
+        assert isinstance(msg, InvocationMessage)
+        assert msg.invocation_id == 'inv-1'
+        assert msg.arguments == [42]
+
     def test_encode_decode_ping_roundtrip(self) -> None:
         proto = MessagepackProtocol()
         encoded = proto.encode(PingMessage())
         msgs = proto.decode(encoded)
         assert len(msgs) == 1
         assert isinstance(msgs[0], PingMessage)
+
+    def test_encode_decode_completion_error_roundtrip(self) -> None:
+        proto = MessagepackProtocol()
+        msg = CompletionMessage(invocation_id='inv-1', error='fail')
+        encoded = proto.encode(msg)
+        decoded = proto.decode(encoded)
+        assert len(decoded) == 1
+        result = decoded[0]
+        assert isinstance(result, CompletionMessage)
+        assert result.error == 'fail'
+        assert result.result is None
+
+    def test_encode_decode_completion_void_roundtrip(self) -> None:
+        proto = MessagepackProtocol()
+        msg = CompletionMessage(invocation_id='inv-1')
+        encoded = proto.encode(msg)
+        decoded = proto.decode(encoded)
+        assert len(decoded) == 1
+        result = decoded[0]
+        assert isinstance(result, CompletionMessage)
+        assert result.result is None
+        assert result.error is None
+
+    def test_encode_decode_completion_result_roundtrip(self) -> None:
+        proto = MessagepackProtocol()
+        msg = CompletionMessage(invocation_id='inv-1', result={'value': 99})
+        encoded = proto.encode(msg)
+        decoded = proto.decode(encoded)
+        assert len(decoded) == 1
+        result = decoded[0]
+        assert isinstance(result, CompletionMessage)
+        assert result.result == {'value': 99}
+        assert result.error is None
+
+    def test_encode_headers_as_empty_map(self) -> None:
+        proto = MessagepackProtocol()
+        msg = InvocationMessage(invocation_id='inv-1', target='Foo', arguments=[], headers=None)
+        encoded = proto.encode(msg)
+        # Decode raw to inspect the array
+        _, offset = proto._from_varint(encoded, 0)
+        raw_array = msgpack.unpackb(encoded[offset:])
+        # headers is at index 1
+        assert raw_array[1] == {}, f'Expected empty map, got {raw_array[1]}'
 
 
 class TestMessagepackDecodeHandshake:

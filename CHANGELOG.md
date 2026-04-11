@@ -13,15 +13,17 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-- Fixed MessagePack decoder reading only 1 byte for varint-encoded message length.
-- Fixed `KeyError` in `_on_completion_message` when server sends a completion for an untracked invocation ID.
-- Fixed `_stream_handlers` entries not being cleaned up on stream completion (memory leak).
-- Fixed invalid string fallback `'close'` for `MessageType` IntEnum in JSON protocol `parse_message`.
-- Fixed `MessagepackProtocol.encode()` raising `TypeError` by passing a `deque` to `msgpack.packb` instead of a `list`.
-- Fixed custom SSL context not being applied to the HTTP negotiation request (`aiohttp.ClientSession`).
+- Fixed SignalR Hub Protocol spec compliance in JSON and MessagePack codecs (`streamIds`, `invocationId`, `ResultKind`, headers, varint framing).
+- Fixed `Message.dump()` mutating the message instance.
+- Fixed `CompletionClientStreamMessage` using wrong message type.
+- Fixed `send()` always generating `invocationId`, preventing non-blocking invocations.
+- Fixed stream error routing: `on_complete` called after error, missing `on_error` fallback, `KeyError` on unknown invocation ID.
+- Fixed client results treating falsy return values (`0`, `False`, `[]`) as missing.
+- Fixed custom SSL context not being applied to HTTP negotiation.
 
 ### Changed
 
+- Switched build tooling from Poetry to uv.
 - Updated `websockets` library to 16.0.
 - Changed default WebSocket `ping_interval` from 10s to 20s to match `websockets` library defaults.
 - Applied `connection_timeout` as `close_timeout` in WebSocket connections.
