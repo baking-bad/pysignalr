@@ -273,7 +273,7 @@ class WebsocketTransport(Transport):
         """
         try:
             await asyncio.wait_for(self._connected.wait(), self._connection_timeout)
-        except TimeoutError as e:
+        except (TimeoutError, asyncio.TimeoutError) as e:
             raise RuntimeError('The socket was never run') from e
         if not self._ws or self._ws.state != State.OPEN:
             raise RuntimeError('Connection is closed')
