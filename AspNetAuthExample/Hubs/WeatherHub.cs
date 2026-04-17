@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.SignalR;
 
 namespace AspNetAuthExample.Hubs;
@@ -48,4 +49,31 @@ public class WeatherHub : Hub
         if (response == "Reply message")
             await Clients.Client(Context.ConnectionId).SendAsync("SuccessReceivedMessage", user, message);
     }
+
+    // Server -> client streaming. Yields `count, count-1, ..., 1`.
+    public async IAsyncEnumerable<int> Countdown(int count, [EnumeratorCancellation] CancellationToken ct)
+    {
+        for (int i = count; i > 0; i--)
+        {
+            yield return i;
+            await Task.Delay(10, ct);
+        }
+    }
+
+    // Client -> server streaming. Broadcasts the sum to the caller via UploadComplete.
+    public async Task UploadStream(IAsyncEnumerable<int> stream)
+    {
+        int sum = 0;
+        await foreach (var item in stream)
+        {
+            sum += item;
+        }
+        await Clients.Caller.SendAsync("UploadComplete", sum);
+    }
+
+    // Round-trip echo, used for large-payload varint stress on MessagePack.
+    public Task<string> Echo(string payload) => Task.FromResult(payload);
+
+    // Always throws; used to verify CompletionMessage.error routing.
+    public Task Fail(string reason) => throw new HubException(reason);
 }

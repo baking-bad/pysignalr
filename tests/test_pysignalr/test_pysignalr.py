@@ -477,3 +477,139 @@ class TestPysignalr:
 
         assert received_a == [('broadcaster', 'broadcast!')]
         assert received_b == [('broadcaster', 'broadcast!')]
+
+    @PROTOCOL_PARAMS
+    async def test_scenario_server_to_client_stream(self, aspnet_server: str, protocol: Protocol) -> None:
+        """
+        Scenario: client.stream() receives multiple StreamItemMessage values
+        followed by a terminating CompletionMessage.
+        Covers StreamInvocationMessage encode + StreamItemMessage decode.
+        """
+        token = self._get_token(aspnet_server)
+        client = self._make_client(aspnet_server, token, protocol)
+        received: list[int] = []
+        done = asyncio.Event()
+        task: asyncio.Task[None]
+
+        async def on_next(item: Any) -> None:
+            received.append(int(item))
+
+        async def on_complete(_msg: Any) -> None:
+            done.set()
+
+        async def on_open() -> None:
+            await client.stream('Countdown', [5], on_next=on_next, on_complete=on_complete)  # type: ignore[list-item]
+
+        client.on_open(on_open)
+        task = asyncio.create_task(client.run())
+        try:
+            await asyncio.wait_for(done.wait(), timeout=30)
+        finally:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+
+        assert received == [5, 4, 3, 2, 1]
+
+    @PROTOCOL_PARAMS
+    async def test_scenario_client_to_server_stream(self, aspnet_server: str, protocol: Protocol) -> None:
+        """
+        Scenario: client.client_stream() pushes 5 ints; server sums them and
+        notifies the caller via UploadComplete.
+        Covers InvocationClientStreamMessage + stream_ids, outgoing
+        StreamItemMessage, and CompletionClientStreamMessage.
+        """
+        token = self._get_token(aspnet_server)
+        client = self._make_client(aspnet_server, token, protocol)
+        result: list[int] = []
+        done = asyncio.Event()
+        task: asyncio.Task[None]
+
+        async def on_complete(arguments: Any) -> None:
+            result.append(int(arguments[0]))
+            done.set()
+
+        async def on_open() -> None:
+            async with client.client_stream('UploadStream') as stream:
+                for i in range(1, 6):
+                    await stream.send(i)
+
+        client.on('UploadComplete', on_complete)
+        client.on_open(on_open)
+        task = asyncio.create_task(client.run())
+        try:
+            await asyncio.wait_for(done.wait(), timeout=30)
+        finally:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+
+        assert result == [15]
+
+    @PROTOCOL_PARAMS
+    async def test_scenario_large_payload(self, aspnet_server: str, protocol: Protocol) -> None:
+        """
+        Scenario: round-trip a 512-byte string via Echo.
+        For MessagePack this forces multi-byte varint framing (>127 bytes);
+        for JSON it stresses string-escape handling.
+        """
+        token = self._get_token(aspnet_server)
+        client = self._make_client(aspnet_server, token, protocol)
+        payload = 'x' * 512
+        result: list[str] = []
+        done = asyncio.Event()
+        task: asyncio.Task[None]
+
+        async def on_invocation(msg: Any) -> None:
+            result.append(cast('str', msg.result))
+            done.set()
+
+        async def on_open() -> None:
+            await client.send('Echo', [payload], on_invocation=on_invocation)  # type: ignore[list-item]
+
+        client.on_open(on_open)
+        task = asyncio.create_task(client.run())
+        try:
+            await asyncio.wait_for(done.wait(), timeout=30)
+        finally:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+
+        assert result == [payload]
+
+    @PROTOCOL_PARAMS
+    async def test_scenario_server_error(self, aspnet_server: str, protocol: Protocol) -> None:
+        """
+        Scenario: server method throws HubException; client's on_error receives
+        the CompletionMessage with .error populated.
+        Covers CompletionMessage error-path decoding.
+        """
+        token = self._get_token(aspnet_server)
+        client = self._make_client(aspnet_server, token, protocol)
+        errors: list[str] = []
+        done = asyncio.Event()
+        task: asyncio.Task[None]
+
+        async def on_error(msg: Any) -> None:
+            errors.append(str(msg.error))
+            done.set()
+
+        async def on_invocation(_msg: Any) -> None:
+            pass
+
+        async def on_open() -> None:
+            await client.send('Fail', ['boom'], on_invocation=on_invocation)  # type: ignore[list-item]
+
+        client.on_error(on_error)
+        client.on_open(on_open)
+        task = asyncio.create_task(client.run())
+        try:
+            await asyncio.wait_for(done.wait(), timeout=30)
+        finally:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+
+        assert errors
+        assert 'boom' in errors[0]

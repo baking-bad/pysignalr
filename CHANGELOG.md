@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - Fixed `HandshakeRequestMessage` encoded as an empty MessagePack array when using `MessagepackProtocol` (handshake is always JSON per spec).
+- Fixed `Message.dump()` output when `headers` is `None`.
+- Fixed `MessagepackProtocol.encode()` producing malformed completion frames for `CompletionClientStreamMessage`.
 
 ## [1.3.1] - 2026-04-11
 

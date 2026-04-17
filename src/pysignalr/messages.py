@@ -96,12 +96,15 @@ class Message:
 
         invocation_id = data.pop('invocation_id', None)
         stream_ids = data.pop('stream_ids', None)
+        headers = data.pop('headers', None)
 
         data['type'] = self.type  # type: ignore[attr-defined]
         if invocation_id is not None:
             data['invocationId'] = invocation_id
         if stream_ids is not None:
             data['streamIds'] = stream_ids
+        if headers is not None:
+            data['headers'] = headers
 
         return data
 
