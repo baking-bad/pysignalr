@@ -9,6 +9,7 @@ import pytest
 
 from pysignalr.messages import CancelInvocationMessage
 from pysignalr.messages import CloseMessage
+from pysignalr.messages import CompletionClientStreamMessage
 from pysignalr.messages import CompletionMessage
 from pysignalr.messages import HandshakeRequestMessage
 from pysignalr.messages import InvocationClientStreamMessage
@@ -249,6 +250,14 @@ class TestMessagepackDecode:
         raw_array = msgpack.unpackb(encoded[offset:])
         # headers is at index 1
         assert raw_array[1] == {}, f'Expected empty map, got {raw_array[1]}'
+
+    def test_encode_completion_client_stream_has_result_kind(self) -> None:
+        """Client-stream end must serialize as a void completion `[3, {}, id, 2]`."""
+        proto = MessagepackProtocol()
+        encoded = proto.encode(CompletionClientStreamMessage(invocation_id='inv-1'))
+        _, offset = proto._from_varint(encoded, 0)
+        raw = msgpack.unpackb(encoded[offset:])
+        assert raw == [3, {}, 'inv-1', 2]
 
 
 class TestMessagepackEncodeHandshake:

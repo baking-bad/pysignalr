@@ -25,6 +25,12 @@ class TestMessageDump:
         data = msg.dump()
         assert data['headers'] == {'x': '1'}
 
+    def test_dump_omits_null_headers(self) -> None:
+        """SignalR rejects `headers: null` on the wire; omit the key when unset."""
+        msg = InvocationMessage(invocation_id='inv-1', target='Foo', arguments=[])
+        data = msg.dump()
+        assert 'headers' not in data
+
 
     def test_dump_is_idempotent(self) -> None:
         msg = InvocationMessage(invocation_id='inv-1', target='Foo', arguments=[1, 2])
