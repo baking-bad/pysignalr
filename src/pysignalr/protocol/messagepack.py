@@ -88,6 +88,10 @@ class MessagepackProtocol(Protocol):
         Returns:
             bytes: The raw representation of the message.
         """
+        # NOTE: Per SignalR spec, the handshake is always JSON, even for MessagePack connections.
+        if isinstance(message, HandshakeRequestMessage):
+            return orjson.dumps(message.dump()) + b'\x1e'
+
         if isinstance(message, CompletionMessage):
             raw_message = self._encode_completion(message)
         else:
