@@ -10,6 +10,7 @@ import pytest
 from pysignalr.messages import CancelInvocationMessage
 from pysignalr.messages import CloseMessage
 from pysignalr.messages import CompletionMessage
+from pysignalr.messages import HandshakeRequestMessage
 from pysignalr.messages import InvocationClientStreamMessage
 from pysignalr.messages import InvocationMessage
 from pysignalr.messages import PingMessage
@@ -248,6 +249,16 @@ class TestMessagepackDecode:
         raw_array = msgpack.unpackb(encoded[offset:])
         # headers is at index 1
         assert raw_array[1] == {}, f'Expected empty map, got {raw_array[1]}'
+
+
+class TestMessagepackEncodeHandshake:
+    def test_encode_handshake_is_json(self) -> None:
+        """Per SignalR spec, the handshake is always JSON even for MessagePack connections."""
+        proto = MessagepackProtocol()
+        encoded = proto.encode(HandshakeRequestMessage(protocol='messagepack', version=1))
+        assert encoded.endswith(b'\x1e')
+        payload = json.loads(encoded[:-1])
+        assert payload == {'protocol': 'messagepack', 'version': 1}
 
 
 class TestMessagepackDecodeHandshake:
