@@ -15,8 +15,11 @@ install:        ## Install dependencies
 update:         ## Update dependencies
 	uv sync -U
 
-all:            ## Run a whole CI pipeline: linters, tests
-	make lint test
+all:            ## Run a whole CI pipeline: formatters, linters, tests
+	make format lint test
+
+format:
+	ruff format $(SOURCE)
 
 lint:           ## Lint with all tools
 	make ruff mypy
@@ -29,7 +32,7 @@ test-websockets: ## Run tests with WEBSOCKETS version constraint
 
 ##
 
-ruff:           ## Lint with ruff
+ruff:           ## Lint and format with ruff
 	ruff check --fix --unsafe-fixes $(SOURCE)
 
 mypy:           ## Lint with mypy

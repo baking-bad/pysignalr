@@ -37,7 +37,6 @@ class _UnhandledMessage(Message, type_=MessageType._):
     """A Message subclass not handled by _on_message."""
 
 
-
 class TestOnInvocationMessage:
     async def test_no_handler_no_response(self) -> None:
         """Unregistered event without invocation_id → warning only, nothing sent."""

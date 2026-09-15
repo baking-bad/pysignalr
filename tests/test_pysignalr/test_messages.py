@@ -31,7 +31,6 @@ class TestMessageDump:
         data = msg.dump()
         assert 'headers' not in data
 
-
     def test_dump_is_idempotent(self) -> None:
         msg = InvocationMessage(invocation_id='inv-1', target='Foo', arguments=[1, 2])
         first = msg.dump()

@@ -10,13 +10,11 @@ class HubError(Exception):
     """
 
 
-
 @dataclass(frozen=True)
 class AuthorizationError(HubError):
     """
     Exception raised for authorization errors.
     """
-
 
 
 @dataclass(frozen=True)

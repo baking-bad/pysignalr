@@ -241,7 +241,6 @@ class PingMessage(Message, type_=MessageType.ping):
     """
 
 
-
 @dataclass
 class StreamInvocationMessage(Message, type_=MessageType.stream_invocation):
     """

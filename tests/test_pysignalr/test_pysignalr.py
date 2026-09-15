@@ -71,9 +71,7 @@ async def aspnet_server() -> str:
     atexit.register(container.stop)
     container.reload()
     network_settings = container.attrs['NetworkSettings']
-    ip = network_settings.get('IPAddress') or next(
-        iter(network_settings['Networks'].values())
-    )['IPAddress']
+    ip = network_settings.get('IPAddress') or next(iter(network_settings['Networks'].values()))['IPAddress']
     ip = cast('str', ip)
 
     _logger.info('Waiting for server to start')
