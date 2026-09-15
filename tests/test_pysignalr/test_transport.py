@@ -103,9 +103,9 @@ class TestNegotiateSSL:
         session = _session_mock(response)
 
         with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
-            with pytest.raises(AuthorizationError):
-                await client._transport._negotiate()
+             patch('pysignalr.transport.websocket.ClientSession', return_value=session), \
+             pytest.raises(AuthorizationError):
+            await client._transport._negotiate()
 
     async def test_negotiate_azure_redirect(self) -> None:
         """Azure SignalR redirect (url + accessToken) updates URL and Authorization header."""
@@ -147,9 +147,9 @@ class TestNegotiateSSL:
         session = _session_mock(response)
 
         with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
-            with pytest.raises(SignalRConnectionError):
-                await client._transport._negotiate()
+             patch('pysignalr.transport.websocket.ClientSession', return_value=session), \
+             pytest.raises(SignalRConnectionError):
+            await client._transport._negotiate()
 
     async def test_negotiate_no_connection_id_no_azure(self) -> None:
         """JSON response with neither connectionId nor Azure fields raises ServerError."""
@@ -158,9 +158,8 @@ class TestNegotiateSSL:
         session = _session_mock(response)
 
         with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
-            with pytest.raises(ServerError):
-                await client._transport._negotiate()
+             patch('pysignalr.transport.websocket.ClientSession', return_value=session), pytest.raises(ServerError):
+            await client._transport._negotiate()
 
     async def test_negotiate_forwards_cookies_to_headers(self) -> None:
         """Set-Cookie on the negotiate response (e.g. load balancer session affinity)
@@ -355,11 +354,10 @@ class TestLoop:
         """ServerConnectionError during negotiate in _loop raises NegotiationFailure."""
         transport = _make_transport()
 
-        with patch.object(transport, '_negotiate', side_effect=ServerConnectionError()):
-            with pytest.raises(NegotiationFailure):
-                await transport._loop()
+        with patch.object(transport, '_negotiate', side_effect=ServerConnectionError()), \
+             pytest.raises(NegotiationFailure):
+            await transport._loop()
 
-    @pytest.mark.filterwarnings('ignore::RuntimeWarning')
     async def test_connection_closed_triggers_reconnect(self) -> None:
         transport = _make_transport(skip_negotiation=True)
         transport._ssl = None
@@ -387,6 +385,8 @@ class TestLoop:
                 return mock_conn
 
         async def fake_gather(*coros: Any, **kwargs: Any) -> None:
+            for coro in coros:
+                coro.close()
             raise ConnectionClosed(Close(CloseCode.NORMAL_CLOSURE, ''), None)
 
         with patch('pysignalr.transport.websocket.connect', return_value=FakeConnectIter()), \
@@ -428,9 +428,9 @@ class TestKeepalive:
             if call_count > 1:
                 raise asyncio.CancelledError
 
-        with patch('pysignalr.transport.websocket.asyncio.sleep', side_effect=fake_sleep):
-            with pytest.raises(asyncio.CancelledError):
-                await transport._keepalive(conn)
+        with patch('pysignalr.transport.websocket.asyncio.sleep', side_effect=fake_sleep), \
+             pytest.raises(asyncio.CancelledError):
+            await transport._keepalive(conn)
 
         conn.send.assert_called_with(b'ping')
 

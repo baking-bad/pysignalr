@@ -36,7 +36,6 @@ class _FakeBindingFailure:
 class _UnhandledMessage(Message, type_=MessageType._):
     """A Message subclass not handled by _on_message."""
 
-    pass
 
 
 class TestOnInvocationMessage:

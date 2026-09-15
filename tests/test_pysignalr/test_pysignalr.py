@@ -26,6 +26,7 @@ PROTOCOL_PARAMS = pytest.mark.parametrize(
 )
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+_logger = logging.getLogger(__name__)
 
 
 def get_docker_client() -> 'DockerClient':
@@ -51,13 +52,13 @@ async def aspnet_server() -> str:
     """Run dummy ASPNet server container (destroyed on exit) and return its IP."""
     docker = get_docker_client()
 
-    logging.info('Building ASPNet server image (this may take a while)')
+    _logger.info('Building ASPNet server image (this may take a while)')
     docker.images.build(
         path=Path(__file__).parent.parent.parent.joinpath('AspNetAuthExample').as_posix(),
         tag='aspnet_server',
     )
 
-    logging.info('Starting ASPNet server container')
+    _logger.info('Starting ASPNet server container')
     container = docker.containers.run(
         image='aspnet_server',
         environment={
@@ -75,7 +76,7 @@ async def aspnet_server() -> str:
     )['IPAddress']
     ip = cast('str', ip)
 
-    logging.info('Waiting for server to start')
+    _logger.info('Waiting for server to start')
     wait_for_server(f'http://{ip}/api/auth/login')
 
     return ip
@@ -94,10 +95,10 @@ def wait_for_server(url: str, timeout: int = 30) -> None:
         try:
             response = requests.post(url, json={'username': 'test', 'password': 'password'}, timeout=10)
             if response.status_code in [200, 401, 403]:
-                logging.info('Server is up and running at %s', url)
+                _logger.info('Server is up and running at %s', url)
                 break
         except requests.exceptions.RequestException as e:
-            logging.info('Waiting for server: %s', e)
+            _logger.info('Waiting for server: %s', e)
         if time.time() - start > timeout:
             raise TimeoutError('Server did not start in time')
         time.sleep(2)
@@ -110,13 +111,13 @@ class TestPysignalr:
         Tests connection to the SignalR server.
         """
         url = f'http://{aspnet_server}/weatherHub'
-        logging.info('Testing connection to %s', url)
+        _logger.info('Testing connection to %s', url)
         client = SignalRClient(url, protocol=protocol)
 
         task = asyncio.create_task(client.run())
 
         async def _on_open() -> None:
-            logging.info('Connection opened, cancelling task')
+            _logger.info('Connection opened, cancelling task')
             task.cancel()
 
         client.on_open(_on_open)
@@ -129,15 +130,15 @@ class TestPysignalr:
         Tests connection to the SignalR server with a valid token.
         """
         login_url = f'http://{aspnet_server}/api/auth/login'
-        logging.info('Attempting to log in at %s', login_url)
+        _logger.info('Attempting to log in at %s', login_url)
         login_data = {'username': 'test', 'password': 'password'}
-        response = requests.post(login_url, json=login_data, timeout=10)
+        response = await asyncio.to_thread(requests.post, login_url, json=login_data, timeout=10)
         token = response.json().get('token')
         if not token:
             pytest.fail('Failed to obtain token from login response')
 
         url = f'http://{aspnet_server}/weatherHub'
-        logging.info('Testing connection with token to %s', url)
+        _logger.info('Testing connection with token to %s', url)
 
         def token_factory() -> str:
             return cast('str', token)
@@ -151,7 +152,7 @@ class TestPysignalr:
         task = asyncio.create_task(client.run())
 
         async def _on_open() -> None:
-            logging.info('Connection with token opened, cancelling task')
+            _logger.info('Connection with token opened, cancelling task')
             task.cancel()
 
         client.on_open(_on_open)
@@ -168,7 +169,7 @@ class TestPysignalr:
         Tests connection to the SignalR server with an invalid token.
         """
         url = f'http://{aspnet_server}/weatherHub'
-        logging.info('Testing connection with invalid token to %s', url)
+        _logger.info('Testing connection with invalid token to %s', url)
 
         def invalid_token_factory() -> str:
             return 'invalid_token'  # Simulate an invalid token
@@ -182,7 +183,7 @@ class TestPysignalr:
         task = asyncio.create_task(client.run())
 
         async def _on_open() -> None:
-            logging.info('Connection with invalid token opened, cancelling task')
+            _logger.info('Connection with invalid token opened, cancelling task')
             task.cancel()
 
         client.on_open(_on_open)
@@ -191,8 +192,7 @@ class TestPysignalr:
             try:
                 await task
             except AuthorizationError:
-                logging.info('AuthorizationError caught as expected')
-                pass
+                _logger.info('AuthorizationError caught as expected')
 
         # Verify if the AuthorizationError was raised correctly
         assert task.cancelled() is True
@@ -203,17 +203,17 @@ class TestPysignalr:
         Tests sending and receiving a message with the SignalR server.
         """
         login_url = f'http://{aspnet_server}/api/auth/login'
-        logging.info('Attempting to log in at %s', login_url)
+        _logger.info('Attempting to log in at %s', login_url)
         login_data = {'username': 'test', 'password': 'password'}
-        response = requests.post(login_url, json=login_data, timeout=10)
+        response = await asyncio.to_thread(requests.post, login_url, json=login_data, timeout=10)
         token = response.json().get('token')
         if not token:
-            logging.error('Failed to obtain token from login response')
+            _logger.error('Failed to obtain token from login response')
             raise AssertionError('Failed to obtain token from login response')
-        logging.info('Obtained token: %s', token)
+        _logger.info('Obtained token: %s', token)
 
         url = f'http://{aspnet_server}/weatherHub'
-        logging.info('Testing send and receive message with token to %s', url)
+        _logger.info('Testing send and receive message with token to %s', url)
 
         def token_factory() -> str:
             return cast('str', token)
@@ -229,7 +229,7 @@ class TestPysignalr:
 
         async def on_message_received(arguments: Any) -> None:
             user, message = arguments
-            logging.info('Message received from %s: %s', user, message)
+            _logger.info('Message received from %s: %s', user, message)
             received_messages.append((user, message))
             if len(received_messages) >= 1:
                 task.cancel()
@@ -239,7 +239,7 @@ class TestPysignalr:
         task = asyncio.create_task(client.run())
 
         async def _on_open() -> None:
-            logging.info('Connection with token opened, sending message')
+            _logger.info('Connection with token opened, sending message')
             await client.send('SendMessage', ['testuser', 'Hello, World!'])  # type: ignore[list-item]
 
         client.on_open(_on_open)
@@ -248,7 +248,7 @@ class TestPysignalr:
             with suppress(asyncio.CancelledError):
                 await task
         except ServerError as e:
-            logging.error('Server error: %s', e)
+            _logger.error('Server error: %s', e)
             raise
 
         # Verify if the message was received correctly
@@ -260,7 +260,7 @@ class TestPysignalr:
 
         # Log detailed messages received
         for user, message in received_messages:
-            logging.info('Detailed Log: Message from %s - %s', user, message)
+            _logger.info('Detailed Log: Message from %s - %s', user, message)
 
     @PROTOCOL_PARAMS
     async def test_result_from_client(self, aspnet_server: str, protocol: Protocol) -> None:
@@ -268,17 +268,17 @@ class TestPysignalr:
         Tests send result from client when SignalR server use InvokeAsync method.
         """
         login_url = f'http://{aspnet_server}/api/auth/login'
-        logging.info('Attempting to log in at %s', login_url)
+        _logger.info('Attempting to log in at %s', login_url)
         login_data = {'username': 'test', 'password': 'password'}
-        response = requests.post(login_url, json=login_data, timeout=10)
+        response = await asyncio.to_thread(requests.post, login_url, json=login_data, timeout=10)
         token = response.json().get('token')
         if not token:
-            logging.error('Failed to obtain token from login response')
+            _logger.error('Failed to obtain token from login response')
             raise AssertionError('Failed to obtain token from login response')
-        logging.info('Obtained token: %s', token)
+        _logger.info('Obtained token: %s', token)
 
         url = f'http://{aspnet_server}/weatherHub'
-        logging.info('Testing reply when receive InvokeAsync message with token to %s', url)
+        _logger.info('Testing reply when receive InvokeAsync message with token to %s', url)
 
         def token_factory() -> str:
             return cast('str', token)
@@ -294,12 +294,12 @@ class TestPysignalr:
 
         async def on_result_require(arguments: Any) -> str:
             argument = arguments[0]
-            logging.info('Message to reply received: %s', argument)
+            _logger.info('Message to reply received: %s', argument)
             return 'Reply message'
 
         async def on_message_received(arguments: Any) -> None:
             user, message = arguments
-            logging.info('Server received the reply and now send a message from %s: %s', user, message)
+            _logger.info('Server received the reply and now send a message from %s: %s', user, message)
             received_messages.append((user, message))
             if len(received_messages) >= 1:
                 task.cancel()
@@ -310,7 +310,7 @@ class TestPysignalr:
         task = asyncio.create_task(client.run())
 
         async def _on_open() -> None:
-            logging.info('Connection with token opened, sending message to trigger invoke async method')
+            _logger.info('Connection with token opened, sending message to trigger invoke async method')
             await client.send('TriggerResultRequired', ['testuser', 'Hello, World!'])  # type: ignore[list-item]
 
         client.on_open(_on_open)
@@ -319,10 +319,10 @@ class TestPysignalr:
             with suppress(asyncio.CancelledError):
                 await asyncio.wait_for(task, timeout=30)  # Set a timeout for the task
         except ServerError as e:
-            logging.error('Server error: %s', e)
+            _logger.error('Server error: %s', e)
             raise
         except asyncio.TimeoutError:
-            logging.error('Test timed out')
+            _logger.error('Test timed out')
             task.cancel()
             await task
 
@@ -335,7 +335,7 @@ class TestPysignalr:
 
         # Log detailed messages received
         for user, message in received_messages:
-            logging.info('Detailed Log: Message from %s - %s', user, message)
+            _logger.info('Detailed Log: Message from %s - %s', user, message)
 
     # --- helpers for scenario tests ---
 
@@ -384,7 +384,7 @@ class TestPysignalr:
             with suppress(asyncio.CancelledError):
                 await asyncio.wait_for(task, timeout=30)
         except asyncio.TimeoutError:
-            logging.error('Test timed out')
+            _logger.error('Test timed out')
             task.cancel()
             await task
 
@@ -420,7 +420,7 @@ class TestPysignalr:
             with suppress(asyncio.CancelledError):
                 await asyncio.wait_for(task, timeout=30)
         except asyncio.TimeoutError:
-            logging.error('Test timed out')
+            _logger.error('Test timed out')
             task.cancel()
             await task
 
@@ -469,7 +469,7 @@ class TestPysignalr:
         try:
             await asyncio.wait_for(done.wait(), timeout=30)
         except asyncio.TimeoutError:
-            logging.error('Test timed out')
+            _logger.error('Test timed out')
         finally:
             task_a.cancel()
             task_b.cancel()

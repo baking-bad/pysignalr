@@ -50,7 +50,7 @@ def _make_connect_mock(side_effects: list[Any]) -> MagicMock:
                 raise effect()
             return effect
 
-        async def __aexit__(self_inner, *_: Any) -> Literal[False]:
+        async def __aexit__(self_inner, *_: object) -> Literal[False]:
             return False
 
     return _FakeConnect()  # type: ignore[return-value]
@@ -129,10 +129,9 @@ class TestBackoffAiter:
         sleep_mock = AsyncMock()
 
         with patch('pysignalr.asyncio.sleep', sleep_mock), \
-             patch('pysignalr.random.random', return_value=0.0):
-            with suppress(asyncio.CancelledError):
-                async for _ in backoff_aiter(connect):
-                    pass  # consume the successful yield, let the generator continue
+             patch('pysignalr.random.random', return_value=0.0), suppress(asyncio.CancelledError):
+            async for _ in backoff_aiter(connect):
+                pass  # consume the successful yield, let the generator continue
 
         # Both failures produce the initial-delay sleep (0.0), not a grown one.
         assert sleep_mock.call_count == 2
@@ -175,9 +174,9 @@ class TestTransportRetry:
         transport = self._make_transport(retry_count=2, retry_sleep=0.0)
 
         with patch.object(transport, '_loop', side_effect=NegotiationFailure), \
-             patch('pysignalr.transport.websocket.asyncio.sleep', new_callable=AsyncMock):
-            with pytest.raises(NegotiationFailure):
-                await transport.run()
+             patch('pysignalr.transport.websocket.asyncio.sleep', new_callable=AsyncMock), \
+             pytest.raises(NegotiationFailure):
+            await transport.run()
 
     async def test_sleep_increases_between_retries(self) -> None:
         """Sleep duration grows by retry_multiplier between NegotiationFailure retries."""
@@ -192,9 +191,8 @@ class TestTransportRetry:
         sleep_mock = AsyncMock()
 
         with patch.object(transport, '_loop', side_effect=NegotiationFailure), \
-             patch('pysignalr.transport.websocket.asyncio.sleep', sleep_mock):
-            with pytest.raises(NegotiationFailure):
-                await transport.run()
+             patch('pysignalr.transport.websocket.asyncio.sleep', sleep_mock), pytest.raises(NegotiationFailure):
+            await transport.run()
 
         assert sleep_mock.call_count == 2  # 3 retries → 2 sleeps (last raises)
         sleep_values = [c.args[0] for c in sleep_mock.call_args_list]
@@ -214,8 +212,7 @@ class TestTransportRetry:
         sleep_mock = AsyncMock()
         with patch.object(transport, '_loop', side_effect=_loop_then_cancel), \
              patch.object(transport, '_set_state', new_callable=AsyncMock), \
-             patch('pysignalr.transport.websocket.asyncio.sleep', sleep_mock):
-            with suppress(asyncio.CancelledError):
-                await transport.run()
+             patch('pysignalr.transport.websocket.asyncio.sleep', sleep_mock), suppress(asyncio.CancelledError):
+            await transport.run()
 
         sleep_mock.assert_not_called()

@@ -38,7 +38,6 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "black",
     "diff-cover",
     "docker",
     "ruff",
@@ -53,11 +52,6 @@ dev = [
 Repository = "https://github.com/baking-bad/pysignalr"
 Homepage = "https://github.com/baking-bad/pysignalr"
 
-
-[tool.black]
-line-length = 120
-target-version = ["py310", "py311", "py312", "py313", "py314"]
-skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
@@ -92,4 +86,4 @@ exclude_lines = [
 
 [build-system]
 requires = ["hatchling"]
-build-backend = "hatchling.build" 
+build-backend = "hatchling.build"

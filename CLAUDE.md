@@ -6,7 +6,7 @@ Async SignalR client built on `websockets` and `aiohttp`.
 
 ```bash
 make install      # Install dependencies with uv
-make lint         # black + ruff + mypy (strict)
+make lint         # ruff + mypy (strict)
 make test         # pytest with coverage
 make all          # lint + test
 

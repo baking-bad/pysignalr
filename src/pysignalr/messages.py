@@ -240,7 +240,6 @@ class PingMessage(Message, type_=MessageType.ping):
     Ping message.
     """
 
-    pass
 
 
 @dataclass
