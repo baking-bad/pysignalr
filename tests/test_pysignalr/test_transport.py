@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import ssl
+from http.cookies import SimpleCookie
 from typing import Any
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
@@ -24,10 +25,15 @@ from pysignalr.transport.websocket import BaseWebsocketTransport
 from pysignalr.transport.websocket import WebsocketTransport
 
 
-def _response_mock(status: int = 200, json_data: dict[str, Any] | None = None) -> MagicMock:
+def _response_mock(
+    status: int = 200,
+    json_data: dict[str, Any] | None = None,
+    cookies: dict[str, str] | None = None,
+) -> MagicMock:
     response = MagicMock()
     response.status = status
     response.json = AsyncMock(return_value=json_data if json_data is not None else {'connectionId': 'test-id'})
+    response.cookies = SimpleCookie(cookies or {})
     response.__aenter__ = AsyncMock(return_value=response)
     response.__aexit__ = AsyncMock(return_value=False)
     return response
@@ -134,6 +140,49 @@ class TestNegotiateSSL:
              patch('pysignalr.transport.websocket.ClientSession', return_value=session):
             with pytest.raises(ServerError):
                 await client._transport._negotiate()
+
+    async def test_negotiate_forwards_cookies_to_headers(self) -> None:
+        """Set-Cookie on the negotiate response (e.g. load balancer session affinity)
+        is forwarded as a Cookie header so the WS upgrade lands on the same backend."""
+        client = SignalRClient('http://localhost/hub')
+        response = _response_mock(
+            json_data={'connectionId': 'abc-123'},
+            cookies={'AWSALB': 'sticky-value'},
+        )
+        session = _session_mock(response)
+
+        with patch('pysignalr.transport.websocket.TCPConnector'), \
+             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+            await client._transport._negotiate()
+
+        assert client._transport._headers['Cookie'] == 'AWSALB=sticky-value'
+
+    async def test_negotiate_no_cookies_no_cookie_header(self) -> None:
+        """No Set-Cookie on the negotiate response leaves headers untouched."""
+        client = SignalRClient('http://localhost/hub')
+        response = _response_mock(json_data={'connectionId': 'abc-123'})
+        session = _session_mock(response)
+
+        with patch('pysignalr.transport.websocket.TCPConnector'), \
+             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+            await client._transport._negotiate()
+
+        assert 'Cookie' not in client._transport._headers
+
+    async def test_negotiate_merges_with_existing_cookie_header(self) -> None:
+        """A caller-supplied Cookie header is preserved alongside forwarded cookies."""
+        client = SignalRClient('http://localhost/hub', headers={'Cookie': 'session=abc'})
+        response = _response_mock(
+            json_data={'connectionId': 'abc-123'},
+            cookies={'AWSALB': 'sticky-value'},
+        )
+        session = _session_mock(response)
+
+        with patch('pysignalr.transport.websocket.TCPConnector'), \
+             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+            await client._transport._negotiate()
+
+        assert client._transport._headers['Cookie'] == 'session=abc; AWSALB=sticky-value'
 
 
 

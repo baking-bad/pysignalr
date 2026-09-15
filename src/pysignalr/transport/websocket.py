@@ -339,10 +339,17 @@ class WebsocketTransport(Transport):
             async with session.post(negotiate_url, headers=self._headers) as response:
                 if response.status == HTTPStatus.OK:
                     data = await response.json()
+                    negotiate_cookies = response.cookies
                 elif response.status == HTTPStatus.UNAUTHORIZED:
                     raise exceptions.AuthorizationError
                 else:
                     raise exceptions.ConnectionError(response.status)
+
+        # Support deployments behind a load balancer with cookie-based session affinity.
+        if negotiate_cookies:
+            cookie_header = '; '.join(f'{name}={morsel.value}' for name, morsel in negotiate_cookies.items())
+            existing_cookie = self._headers.get('Cookie')
+            self._headers['Cookie'] = f'{existing_cookie}; {cookie_header}' if existing_cookie else cookie_header
 
         connection_id = data.get('connectionId')
         url = data.get('url')
