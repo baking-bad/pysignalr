@@ -9,6 +9,7 @@ on:
       - 'tests/**'
       - 'pyproject.toml'
       - 'uv.lock'
+      - 'Makefile'
       - '.github/workflows/test.yml'
 
 jobs:
@@ -30,6 +31,29 @@ jobs:
         run: uv run make lint
       - name: Run tests
         run: uv run make test
+
+  test-websockets:
+    name: Python ${{ matrix.python }} / websockets ${{ matrix.websockets }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.14']
+        websockets: ['==15.0.1', '>=16,<17', '>=17,<18']
+        exclude:
+          - python: '3.10'
+            websockets: '>=17,<18'
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run compatibility tests
+        env:
+          WEBSOCKETS: ${{ matrix.websockets }}
+        run: make test-websockets
 
   test-full:
     name: Test (full matrix)
