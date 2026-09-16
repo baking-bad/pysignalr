@@ -13,6 +13,7 @@ from aiohttp import ServerConnectionError
 from websockets.exceptions import ConnectionClosed
 from websockets.frames import Close
 from websockets.frames import CloseCode
+from yarl import URL
 
 from pysignalr.client import SignalRClient
 from pysignalr.exceptions import ConnectionError as SignalRConnectionError
@@ -29,11 +30,13 @@ def _response_mock(
     status: int = 200,
     json_data: dict[str, Any] | None = None,
     cookies: dict[str, str] | None = None,
+    url: str = 'http://localhost/hub/negotiate',
 ) -> MagicMock:
     response = MagicMock()
     response.status = status
     response.json = AsyncMock(return_value=json_data if json_data is not None else {'connectionId': 'test-id'})
     response.cookies = SimpleCookie(cookies or {})
+    response.url = URL(url)
     response.__aenter__ = AsyncMock(return_value=response)
     response.__aexit__ = AsyncMock(return_value=False)
     return response
@@ -118,6 +121,23 @@ class TestNegotiateSSL:
 
         assert client._transport._headers.get('Authorization') == 'Bearer azure-token'
         assert client._transport._url.startswith('wss://')
+
+    async def test_negotiate_azure_redirect_does_not_leak_cookies(self) -> None:
+        """A cookie set by the negotiate host must not be forwarded to a different
+        Azure SignalR redirect host."""
+        client = SignalRClient('http://localhost/hub')
+        response = _response_mock(
+            json_data={'url': 'https://azure.signalr.net/hub', 'accessToken': 'azure-token'},
+            cookies={'session': 'private'},
+        )
+        session = _session_mock(response)
+
+        with patch('pysignalr.transport.websocket.TCPConnector'), \
+             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+            await client._transport._negotiate()
+
+        assert client._transport._url.startswith('wss://azure.signalr.net')
+        assert 'Cookie' not in client._transport._headers
 
     async def test_negotiate_other_http_error(self) -> None:
         """HTTP 500 raises ConnectionError."""
