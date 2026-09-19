@@ -33,6 +33,7 @@ def _response_mock(
     url: str = 'http://localhost/hub/negotiate',
 ) -> MagicMock:
     response = MagicMock()
+    response.history = ()
     response.status = status
     response.json = AsyncMock(return_value=json_data if json_data is not None else {'connectionId': 'test-id'})
     response.cookies = SimpleCookie(cookies or {})
@@ -176,6 +177,19 @@ class TestNegotiateSSL:
             await client._transport._negotiate()
 
         assert client._transport._headers['Cookie'] == 'AWSALB=sticky-value'
+
+    @pytest.mark.parametrize('redirect', [False, True])
+    async def test_cookie_quoting_and_redirects(self, redirect: bool) -> None:
+        client = SignalRClient('http://localhost/hub')
+        cookie_response = _response_mock(cookies={'session': 'a;b'})
+        response = _response_mock() if redirect else cookie_response
+        if redirect:
+            response.history = (cookie_response,)
+        with patch('pysignalr.transport.websocket.ClientSession', return_value=_session_mock(response)):
+            await client._transport._negotiate()
+        cookies = SimpleCookie()
+        cookies.load(client._transport._headers['Cookie'])
+        assert cookies['session'].value == 'a;b'
 
     async def test_negotiate_no_cookies_no_cookie_header(self) -> None:
         """No Set-Cookie on the negotiate response leaves headers untouched."""

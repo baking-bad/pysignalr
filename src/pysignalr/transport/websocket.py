@@ -346,7 +346,8 @@ class WebsocketTransport(Transport):
             async with session.post(negotiate_url, headers=self._headers) as response:
                 if response.status == HTTPStatus.OK:
                     data = await response.json()
-                    self._cookie_jar.update_cookies(response.cookies, response.url)
+                    for hop in (*response.history, response):
+                        self._cookie_jar.update_cookies(hop.cookies, hop.url)
                 elif response.status == HTTPStatus.UNAUTHORIZED:
                     raise exceptions.AuthorizationError
                 else:
@@ -366,7 +367,7 @@ class WebsocketTransport(Transport):
         else:
             raise exceptions.ServerError(str(data))
 
-        cookies = [f'{c.key}={c.value}' for c in self._cookie_jar.filter_cookies(URL(self._url)).values()]
+        cookies = [f'{c.key}={c.coded_value}' for c in self._cookie_jar.filter_cookies(URL(self._url)).values()]
         if self._static_cookie:
             cookies.insert(0, self._static_cookie)
         if cookies:
