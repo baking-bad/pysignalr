@@ -145,8 +145,10 @@ class TestNegotiateSSL:
         )
         session = _session_mock(response)
 
-        with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector'),
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session),
+        ):
             await client._transport._negotiate()
 
         assert client._transport._url.startswith('wss://azure.signalr.net')
@@ -188,8 +190,10 @@ class TestNegotiateSSL:
         )
         session = _session_mock(response)
 
-        with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector'),
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session),
+        ):
             await client._transport._negotiate()
 
         assert client._transport._headers['Cookie'] == 'AWSALB=sticky-value'
@@ -207,14 +211,20 @@ class TestNegotiateSSL:
         cookies.load(client._transport._headers['Cookie'])
         assert cookies['session'].value == 'a;b'
 
-    async def test_negotiate_no_cookies_no_cookie_header(self) -> None:
-        """No Set-Cookie on the negotiate response leaves headers untouched."""
+    @pytest.mark.parametrize('stale_cookie', [False, True])
+    async def test_negotiate_no_cookies_no_cookie_header(self, stale_cookie: bool) -> None:
+        """Without applicable cookies, negotiation leaves no Cookie header, even a stale one."""
         client = SignalRClient('http://localhost/hub')
+        if stale_cookie:
+            # Simulate a header from a previous negotiation whose cookies have expired.
+            client._transport._headers['Cookie'] = 'AWSALB=expired-value'
         response = _response_mock(json_data={'connectionId': 'abc-123'})
         session = _session_mock(response)
 
-        with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector'),
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session),
+        ):
             await client._transport._negotiate()
 
         assert 'Cookie' not in client._transport._headers
@@ -228,8 +238,10 @@ class TestNegotiateSSL:
         )
         session = _session_mock(response)
 
-        with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector'),
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session),
+        ):
             await client._transport._negotiate()
 
         assert client._transport._headers['Cookie'] == 'session=abc; AWSALB=sticky-value'

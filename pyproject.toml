@@ -57,6 +57,9 @@ Homepage = "https://github.com/baking-bad/pysignalr"
 line-length = 120
 target-version = "py310"
 
+[tool.ruff.format]
+quote-style = "single"
+
 [tool.ruff.lint]
 extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RUF", "TCH", "UP"]
 flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }

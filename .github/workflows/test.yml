@@ -1,40 +1,72 @@
 name: Test
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 on:
   push:
     paths:
       - 'src/**'
       - 'tests/**'
+      - 'AspNetAuthExample/**'
+      - 'example*.py'
       - 'pyproject.toml'
       - 'uv.lock'
       - 'Makefile'
-      - '.github/workflows/test.yml'
+      - '.github/workflows/**'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'AspNetAuthExample/**'
+      - 'example*.py'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'Makefile'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test
-    runs-on: macos-latest
+  lint:
+    name: Lint and type check
+    runs-on: ubuntu-latest
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
         with:
           python-version: '3.14'
+          enable-cache: true
+      - run: make install
+      - name: Check lint, formatting, and types
+        run: uv run --locked make check
 
-      - name: Install project
-        run: make install
-      - name: Run lint
-        run: uv run make lint
-      - name: Run tests
-        run: uv run make test
+  integration-image:
+    name: Build integration server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: AspNetAuthExample
+          tags: aspnet_server:ci
+          outputs: type=docker,dest=${{ runner.temp }}/aspnet-server.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aspnet-server
+          path: ${{ runner.temp }}/aspnet-server.tar
+          retention-days: 1
+          compression-level: 0
 
   test-websockets:
     name: Python ${{ matrix.python }} / websockets ${{ matrix.websockets }}
+    needs: integration-image
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -43,58 +75,70 @@ jobs:
         exclude:
           - python: '3.10'
             websockets: '>=17,<18'
+    env:
+      PYSIGNALR_TEST_IMAGE: aspnet_server:ci
+      WEBSOCKETS: ${{ matrix.websockets }}
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python }}
+          enable-cache: true
+          cache-suffix: websockets-${{ matrix.websockets }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: aspnet-server
+          path: ${{ runner.temp }}
+      - name: Load integration server
+        run: docker load --input "$RUNNER_TEMP/aspnet-server.tar"
       - name: Run compatibility tests
         env:
-          WEBSOCKETS: ${{ matrix.websockets }}
+          COVERAGE: ${{ matrix.python == '3.14' && matrix.websockets == '>=17,<18' && '1' || '0' }}
         run: make test-websockets
+      - name: Save coverage
+        if: matrix.python == '3.14' && matrix.websockets == '>=17,<18'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
 
-  test-full:
-    name: Test (full matrix)
-    if: github.ref == 'refs/heads/master'
+  test-unit:
+    # Python 3.10 and 3.14 on Linux x64 are covered above.
+    name: Unit tests / ${{ matrix.os }} / Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
-            arch: amd64
-            python-version: '3.14'
+            python: '3.11'
           - os: ubuntu-latest
-            arch: arm64
-            python-version: '3.14'
-          - os: macos-latest
-            arch: amd64
-            python-version: '3.14'
+            python: '3.12'
           - os: ubuntu-latest
-            arch: amd64
-            python-version: '3.13'
-          - os: ubuntu-latest
-            arch: amd64
-            python-version: '3.12'
-          - os: ubuntu-latest
-            arch: amd64
-            python-version: '3.11'
-          - os: ubuntu-latest
-            arch: amd64
-            python-version: '3.10'
+            python: '3.13'
+          - os: ubuntu-24.04-arm
+            python: '3.14'
+          - os: macos-15
+            python: '3.14'
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - run: uv run --locked make test-unit
 
-      - name: Install project
-        run: make install
-      - name: Run lint
-        run: uv run make lint
-      - name: Run tests
-        run: uv run make test
+  test-preview:
+    name: Python 3.15 preview
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.15'
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv run --locked --python 3.15 --with 'websockets>=17,<18' make test-unit

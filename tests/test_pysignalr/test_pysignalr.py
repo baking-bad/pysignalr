@@ -1,6 +1,7 @@
 import asyncio
 import atexit
 import logging
+import os
 import time
 from contextlib import suppress
 from pathlib import Path
@@ -41,6 +42,9 @@ def get_docker_client() -> 'DockerClient':
         if path.exists():
             return DockerClient(base_url=f'unix://{path}')
 
+    if os.environ.get('PYSIGNALR_TEST_IMAGE'):
+        pytest.fail('Docker socket required when PYSIGNALR_TEST_IMAGE is set')
+
     raise _pytest.outcomes.Skipped(  # pragma: no cover
         'Docker socket not found',
         allow_module_level=True,
@@ -52,15 +56,21 @@ async def aspnet_server() -> str:
     """Run dummy ASPNet server container (destroyed on exit) and return its IP."""
     docker = get_docker_client()
 
-    _logger.info('Building ASPNet server image (this may take a while)')
-    docker.images.build(
-        path=Path(__file__).parent.parent.parent.joinpath('AspNetAuthExample').as_posix(),
-        tag='aspnet_server',
-    )
+    image = os.environ.get('PYSIGNALR_TEST_IMAGE')
+    if image:
+        # CI loads the image built once for the entire integration matrix.
+        docker.images.get(image)
+    else:
+        image = 'aspnet_server'
+        _logger.info('Building ASPNet server image (this may take a while)')
+        docker.images.build(
+            path=Path(__file__).parent.parent.parent.joinpath('AspNetAuthExample').as_posix(),
+            tag=image,
+        )
 
     _logger.info('Starting ASPNet server container')
     container = docker.containers.run(
-        image='aspnet_server',
+        image=image,
         environment={
             'ASPNETCORE_ENVIRONMENT': 'Development',
             'ASPNETCORE_URLS': 'http://+:80',

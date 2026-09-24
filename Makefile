@@ -5,12 +5,20 @@ MAKEFLAGS += --no-print-directory
 ##
 SOURCE = src tests example.py example_with_token.py
 WEBSOCKETS ?= >=15.0.1,<18
+COVERAGE ?= 0
+COVERAGE_FLAGS = --cov-report=term-missing --cov=pysignalr --cov-report=xml
 
 help:           ## Show this help (default)
 	@grep -F -h "##" $(MAKEFILE_LIST) | grep -F -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
-install:        ## Install dependencies
-	uv sync
+install:        ## Install dependencies from the lockfile
+	uv sync --locked
+
+build:          ## Build package distributions
+	uv build
+
+publish:        ## Publish built distributions to PyPI
+	uv publish
 
 update:         ## Update dependencies
 	uv sync -U
@@ -24,11 +32,19 @@ format:
 lint:           ## Lint with all tools
 	make ruff mypy
 
-test:           ## Run test suite
-	pytest --cov-report=term-missing --cov=pysignalr --cov-report=xml --asyncio-mode=auto -s -v tests
+check:          ## Check lint, formatting, and types without modifying files
+	ruff check $(SOURCE)
+	ruff format --check $(SOURCE)
+	$(MAKE) mypy
 
-test-websockets: ## Run tests with WEBSOCKETS version constraint
-	uv run --locked --with 'websockets$(WEBSOCKETS)' pytest --asyncio-mode=auto -q tests
+test-unit:      ## Run unit tests without Docker
+	pytest --asyncio-mode=auto -q --ignore=tests/test_pysignalr/test_pysignalr.py tests
+
+test:           ## Run test suite
+	pytest $(COVERAGE_FLAGS) --asyncio-mode=auto -s -v tests
+
+test-websockets: ## Run tests with WEBSOCKETS constraint (COVERAGE=1 enables coverage)
+	uv run --locked --with 'websockets$(WEBSOCKETS)' pytest $(if $(filter 1,$(COVERAGE)),$(COVERAGE_FLAGS)) --asyncio-mode=auto -q tests
 
 ##
 
