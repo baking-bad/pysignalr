@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- Added support for `websockets` version range to `>=15.0.1,<18`.
+
+### Fixed
+
+- Fixed forwarding negotiation cookies to the WebSocket handshake.
+
 ## [1.3.2] - 2026-04-17
 
 ### Fixed
