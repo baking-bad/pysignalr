@@ -240,8 +240,6 @@ class PingMessage(Message, type_=MessageType.ping):
     Ping message.
     """
 
-    pass
-
 
 @dataclass
 class StreamInvocationMessage(Message, type_=MessageType.stream_invocation):

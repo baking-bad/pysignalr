@@ -10,22 +10,20 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
           python-version: '3.14'
+          enable-cache: true
 
       - name: Install project
         run: make install
       - name: Run lint
-        run: uv run make lint
+        run: uv run --locked make check
       - name: Run tests
-        run: uv run make test
-
-      - name: Publish package on PyPi
-        run: uv build && uv publish --token ${{secrets.PYPI_TOKEN}}
+        run: uv run --locked make test
 
       # FIXME: Fails on prereleases; https://github.com/mindsers/changelog-reader-action/pull/39
       - name: Parse changelog
@@ -33,6 +31,14 @@ jobs:
         uses: mindsers/changelog-reader-action@v2
         with:
           version: ${{ github.ref_name }}
+
+      - name: Build package
+        run: make build
+
+      - name: Publish package on PyPI
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: make publish
 
       - name: Publish GitHub release
         id: create_release

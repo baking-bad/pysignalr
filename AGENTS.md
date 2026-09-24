@@ -5,10 +5,16 @@ Async SignalR client built on `websockets` and `aiohttp`.
 ## Commands
 
 ```bash
-make install      # Install dependencies with uv
-make lint         # black + ruff + mypy (strict)
+make install      # Install dependencies from uv.lock (--locked)
+make lint         # Ruff automatic fixes + mypy (strict)
+make format       # Format Python sources
+make check        # Read-only Ruff lint/format checks + mypy (strict)
+make test-unit    # Unit tests without Docker
 make test         # pytest with coverage
-make all          # lint + test
+make test-websockets COVERAGE=1  # Compatibility tests with optional coverage
+make all          # format + lint + test
+make build        # Build package distributions
+make publish      # Publish built distributions to PyPI
 
 # Single test
 pytest --asyncio-mode=auto -s -v tests/test_pysignalr/test_pysignalr.py::test_name
@@ -56,3 +62,5 @@ Hub methods available: `SendMessage`, `AddToGroup`, `SendMessageToGroup`, `GetCu
 **Patching `asyncio.sleep`**: Patch the module-local reference (`pysignalr.asyncio.sleep` or `pysignalr.transport.websocket.asyncio.sleep`), not the global.
 
 **Stopping retry loops in tests**: Raise `asyncio.CancelledError` (a `BaseException`) from a mock — not caught by `except Exception`, cleanly terminates the loop.
+
+CI runs on pull requests and pushes to every branch, subject to path filters (or manually). Integration jobs share a cached ASP.NET image via `PYSIGNALR_TEST_IMAGE`; local full test runs build the image automatically. Python 3.15 has a non-blocking preview job until support is validated.

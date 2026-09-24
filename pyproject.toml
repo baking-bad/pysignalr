@@ -30,7 +30,7 @@ maintainers = [
     { name = "Lev Gorodetskii", email = "github@drsr.io" },
 ]
 dependencies = [
-    "websockets>=16.0,<17",
+    "websockets>=15.0.1,<18",
     "aiohttp",
     "msgpack",
     "orjson",
@@ -38,7 +38,6 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "black",
     "diff-cover",
     "docker",
     "ruff",
@@ -54,14 +53,12 @@ Repository = "https://github.com/baking-bad/pysignalr"
 Homepage = "https://github.com/baking-bad/pysignalr"
 
 
-[tool.black]
-line-length = 120
-target-version = ["py310", "py311", "py312", "py313", "py314"]
-skip-string-normalization = true
-
 [tool.ruff]
 line-length = 120
 target-version = "py310"
+
+[tool.ruff.format]
+quote-style = "single"
 
 [tool.ruff.lint]
 extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RUF", "TCH", "UP"]
@@ -92,4 +89,4 @@ exclude_lines = [
 
 [build-system]
 requires = ["hatchling"]
-build-backend = "hatchling.build" 
+build-backend = "hatchling.build"
