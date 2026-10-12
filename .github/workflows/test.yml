@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
-          python-version: '3.14'
+          python-version: '3.15'
           enable-cache: true
       - run: make install
       - name: Check lint, formatting, and types
@@ -70,7 +70,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.10', '3.14']
+        python: ['3.10', '3.15']
         websockets: ['==15.0.1', '>=16,<17', '>=17,<18']
         exclude:
           - python: '3.10'
@@ -93,17 +93,17 @@ jobs:
         run: docker load --input "$RUNNER_TEMP/aspnet-server.tar"
       - name: Run compatibility tests
         env:
-          COVERAGE: ${{ matrix.python == '3.14' && matrix.websockets == '>=17,<18' && '1' || '0' }}
+          COVERAGE: ${{ matrix.python == '3.15' && matrix.websockets == '>=17,<18' && '1' || '0' }}
         run: make test-websockets
       - name: Save coverage
-        if: matrix.python == '3.14' && matrix.websockets == '>=17,<18'
+        if: matrix.python == '3.15' && matrix.websockets == '>=17,<18'
         uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: coverage.xml
 
   test-unit:
-    # Python 3.10 and 3.14 on Linux x64 are covered above.
+    # Python 3.10 and 3.15 on Linux x64 are covered above.
     name: Unit tests / ${{ matrix.os }} / Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -116,10 +116,12 @@ jobs:
             python: '3.12'
           - os: ubuntu-latest
             python: '3.13'
+          - os: ubuntu-latest
+            python: '3.14'
           - os: ubuntu-24.04-arm
-            python: '3.14'
+            python: '3.15'
           - os: macos-15
-            python: '3.14'
+            python: '3.15'
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -127,18 +129,3 @@ jobs:
           python-version: ${{ matrix.python }}
           enable-cache: true
       - run: uv run --locked make test-unit
-
-  test-preview:
-    name: Python 3.15 preview
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.15'
-          allow-prereleases: true
-      - uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-      - run: uv run --locked --python 3.15 --with 'websockets>=17,<18' make test-unit

@@ -63,4 +63,4 @@ Hub methods available: `SendMessage`, `AddToGroup`, `SendMessageToGroup`, `GetCu
 
 **Stopping retry loops in tests**: Raise `asyncio.CancelledError` (a `BaseException`) from a mock — not caught by `except Exception`, cleanly terminates the loop.
 
-CI runs on pull requests and pushes to every branch, subject to path filters (or manually). Integration jobs share a cached ASP.NET image via `PYSIGNALR_TEST_IMAGE`; local full test runs build the image automatically. Python 3.15 has a non-blocking preview job until support is validated.
+CI runs on pull requests and pushes to every branch, subject to path filters (or manually). Integration jobs share a cached ASP.NET image via `PYSIGNALR_TEST_IMAGE`; local full test runs build the image automatically. Required CI covers Python 3.10–3.15: compatibility jobs test 3.10 and 3.15, and unit jobs cover intermediate versions. ARM Linux and macOS use Python 3.15.
