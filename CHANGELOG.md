@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [1.3.3] - 2026-10-17
 
 ### Added
 
@@ -140,7 +140,8 @@ Initial release.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/baking-bad/pysignalr/compare/1.3.2...HEAD
+[Unreleased]: https://github.com/baking-bad/pysignalr/compare/1.3.3...HEAD
+[1.3.3]: https://github.com/baking-bad/pysignalr/compare/1.3.2...1.3.3
 [1.3.2]: https://github.com/baking-bad/pysignalr/compare/1.3.1...1.3.2
 [1.3.1]: https://github.com/baking-bad/pysignalr/compare/1.3.0...1.3.1
 [1.3.0]: https://github.com/baking-bad/pysignalr/compare/1.2.0...1.3.0
