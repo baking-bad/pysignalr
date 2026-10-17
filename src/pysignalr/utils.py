@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import urllib.parse as parse
 from contextlib import suppress
+from urllib import parse
 
 http_schemas = ('http', 'https')
 websocket_schemas = ('ws', 'wss')

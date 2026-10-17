@@ -58,8 +58,10 @@ class TestNegotiateSSL:
         response = _response_mock()
         session = _session_mock(response)
 
-        with patch('pysignalr.transport.websocket.TCPConnector') as mock_connector, \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector') as mock_connector,
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session),
+        ):
             await client._transport._negotiate()
             mock_connector.assert_not_called()
 
@@ -74,8 +76,10 @@ class TestNegotiateSSL:
         session = _session_mock(response)
         connector_instance = MagicMock()
 
-        with patch('pysignalr.transport.websocket.TCPConnector', return_value=connector_instance) as mock_connector, \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session) as mock_session:
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector', return_value=connector_instance) as mock_connector,
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session) as mock_session,
+        ):
             await client._transport._negotiate()
             mock_connector.assert_called_once_with(ssl=ctx)
             mock_session.assert_called_once()
@@ -88,8 +92,10 @@ class TestNegotiateSSL:
         response = _response_mock(json_data={'connectionId': 'abc-123'})
         session = _session_mock(response)
 
-        with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector'),
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session),
+        ):
             await client._transport._negotiate()
 
         assert 'abc-123' in client._transport._url
@@ -102,22 +108,28 @@ class TestNegotiateSSL:
         response = _response_mock(status=401)
         session = _session_mock(response)
 
-        with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
-            with pytest.raises(AuthorizationError):
-                await client._transport._negotiate()
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector'),
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session),
+            pytest.raises(AuthorizationError),
+        ):
+            await client._transport._negotiate()
 
     async def test_negotiate_azure_redirect(self) -> None:
         """Azure SignalR redirect (url + accessToken) updates URL and Authorization header."""
         client = SignalRClient('http://localhost/hub')
-        response = _response_mock(json_data={
-            'url': 'https://azure.signalr.net/hub',
-            'accessToken': 'azure-token',
-        })
+        response = _response_mock(
+            json_data={
+                'url': 'https://azure.signalr.net/hub',
+                'accessToken': 'azure-token',
+            }
+        )
         session = _session_mock(response)
 
-        with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector'),
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session),
+        ):
             await client._transport._negotiate()
 
         assert client._transport._headers.get('Authorization') == 'Bearer azure-token'
@@ -133,8 +145,10 @@ class TestNegotiateSSL:
         )
         session = _session_mock(response)
 
-        with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector'),
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session),
+        ):
             await client._transport._negotiate()
 
         assert client._transport._url.startswith('wss://azure.signalr.net')
@@ -146,10 +160,12 @@ class TestNegotiateSSL:
         response = _response_mock(status=500)
         session = _session_mock(response)
 
-        with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
-            with pytest.raises(SignalRConnectionError):
-                await client._transport._negotiate()
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector'),
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session),
+            pytest.raises(SignalRConnectionError),
+        ):
+            await client._transport._negotiate()
 
     async def test_negotiate_no_connection_id_no_azure(self) -> None:
         """JSON response with neither connectionId nor Azure fields raises ServerError."""
@@ -157,10 +173,12 @@ class TestNegotiateSSL:
         response = _response_mock(json_data={'someOtherField': True})
         session = _session_mock(response)
 
-        with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
-            with pytest.raises(ServerError):
-                await client._transport._negotiate()
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector'),
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session),
+            pytest.raises(ServerError),
+        ):
+            await client._transport._negotiate()
 
     async def test_negotiate_forwards_cookies_to_headers(self) -> None:
         """Set-Cookie on the negotiate response (e.g. load balancer session affinity)
@@ -172,8 +190,10 @@ class TestNegotiateSSL:
         )
         session = _session_mock(response)
 
-        with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector'),
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session),
+        ):
             await client._transport._negotiate()
 
         assert client._transport._headers['Cookie'] == 'AWSALB=sticky-value'
@@ -191,14 +211,20 @@ class TestNegotiateSSL:
         cookies.load(client._transport._headers['Cookie'])
         assert cookies['session'].value == 'a;b'
 
-    async def test_negotiate_no_cookies_no_cookie_header(self) -> None:
-        """No Set-Cookie on the negotiate response leaves headers untouched."""
+    @pytest.mark.parametrize('stale_cookie', [False, True])
+    async def test_negotiate_no_cookies_no_cookie_header(self, stale_cookie: bool) -> None:
+        """Without applicable cookies, negotiation leaves no Cookie header, even a stale one."""
         client = SignalRClient('http://localhost/hub')
+        if stale_cookie:
+            # Simulate a header from a previous negotiation whose cookies have expired.
+            client._transport._headers['Cookie'] = 'AWSALB=expired-value'
         response = _response_mock(json_data={'connectionId': 'abc-123'})
         session = _session_mock(response)
 
-        with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector'),
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session),
+        ):
             await client._transport._negotiate()
 
         assert 'Cookie' not in client._transport._headers
@@ -212,12 +238,13 @@ class TestNegotiateSSL:
         )
         session = _session_mock(response)
 
-        with patch('pysignalr.transport.websocket.TCPConnector'), \
-             patch('pysignalr.transport.websocket.ClientSession', return_value=session):
+        with (
+            patch('pysignalr.transport.websocket.TCPConnector'),
+            patch('pysignalr.transport.websocket.ClientSession', return_value=session),
+        ):
             await client._transport._negotiate()
 
         assert client._transport._headers['Cookie'] == 'session=abc; AWSALB=sticky-value'
-
 
 
 def _make_transport(**kwargs: Any) -> WebsocketTransport:
@@ -355,11 +382,12 @@ class TestLoop:
         """ServerConnectionError during negotiate in _loop raises NegotiationFailure."""
         transport = _make_transport()
 
-        with patch.object(transport, '_negotiate', side_effect=ServerConnectionError()):
-            with pytest.raises(NegotiationFailure):
-                await transport._loop()
+        with (
+            patch.object(transport, '_negotiate', side_effect=ServerConnectionError()),
+            pytest.raises(NegotiationFailure),
+        ):
+            await transport._loop()
 
-    @pytest.mark.filterwarnings('ignore::RuntimeWarning')
     async def test_connection_closed_triggers_reconnect(self) -> None:
         transport = _make_transport(skip_negotiation=True)
         transport._ssl = None
@@ -387,12 +415,16 @@ class TestLoop:
                 return mock_conn
 
         async def fake_gather(*coros: Any, **kwargs: Any) -> None:
+            for coro in coros:
+                coro.close()
             raise ConnectionClosed(Close(CloseCode.NORMAL_CLOSURE, ''), None)
 
-        with patch('pysignalr.transport.websocket.connect', return_value=FakeConnectIter()), \
-             patch.object(transport, '_handshake', new_callable=AsyncMock), \
-             patch.object(transport, '_set_state', side_effect=tracking_set_state), \
-             patch('pysignalr.transport.websocket.asyncio.gather', side_effect=fake_gather):
+        with (
+            patch('pysignalr.transport.websocket.connect', return_value=FakeConnectIter()),
+            patch.object(transport, '_handshake', new_callable=AsyncMock),
+            patch.object(transport, '_set_state', side_effect=tracking_set_state),
+            patch('pysignalr.transport.websocket.asyncio.gather', side_effect=fake_gather),
+        ):
             await transport._loop()
 
         assert ConnectionState.reconnecting in states_seen
@@ -428,9 +460,11 @@ class TestKeepalive:
             if call_count > 1:
                 raise asyncio.CancelledError
 
-        with patch('pysignalr.transport.websocket.asyncio.sleep', side_effect=fake_sleep):
-            with pytest.raises(asyncio.CancelledError):
-                await transport._keepalive(conn)
+        with (
+            patch('pysignalr.transport.websocket.asyncio.sleep', side_effect=fake_sleep),
+            pytest.raises(asyncio.CancelledError),
+        ):
+            await transport._keepalive(conn)
 
         conn.send.assert_called_with(b'ping')
 

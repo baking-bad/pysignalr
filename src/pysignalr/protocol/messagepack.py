@@ -173,7 +173,9 @@ class MessagepackProtocol(Protocol):
 
         if message_type is MessageType.invocation:
             if len(msg) > 5 and len(msg[5]) > 0:
-                return InvocationClientStreamMessage(headers=msg[1], stream_ids=msg[5], target=msg[3], arguments=msg[4], invocation_id=msg[2])
+                return InvocationClientStreamMessage(
+                    headers=msg[1], stream_ids=msg[5], target=msg[3], arguments=msg[4], invocation_id=msg[2]
+                )
             else:
                 return InvocationMessage(headers=msg[1], invocation_id=msg[2], target=msg[3], arguments=msg[4])
         elif message_type is MessageType.stream_item:
@@ -189,7 +191,9 @@ class MessagepackProtocol(Protocol):
                 raise NotImplementedError
         elif message_type is MessageType.stream_invocation:
             stream_ids = msg[5] if len(msg) > 5 else None
-            return StreamInvocationMessage(headers=msg[1], invocation_id=msg[2], target=msg[3], arguments=msg[4], stream_ids=stream_ids or None)
+            return StreamInvocationMessage(
+                headers=msg[1], invocation_id=msg[2], target=msg[3], arguments=msg[4], stream_ids=stream_ids or None
+            )
         elif message_type is MessageType.cancel_invocation:
             return CancelInvocationMessage(headers=msg[1], invocation_id=msg[2])
         elif message_type is MessageType.ping:

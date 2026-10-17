@@ -9,16 +9,12 @@ class HubError(Exception):
     Base class for all Hub-related errors.
     """
 
-    pass
-
 
 @dataclass(frozen=True)
 class AuthorizationError(HubError):
     """
     Exception raised for authorization errors.
     """
-
-    pass
 
 
 @dataclass(frozen=True)
@@ -50,5 +46,3 @@ class NegotiationFailure(HubError):
     """
     Exception raised when the protocol negotiation fails.
     """
-
-    pass

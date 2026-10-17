@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
 EmptyCallback = Callable[[], Awaitable[None]]
 AnyCallback = Callable[[Any], Awaitable[Any | None]]
-MessageCallback = Callable[[Message], Awaitable[None | Any]]
+MessageCallback = Callable[[Message], Awaitable[Any | None]]
 CompletionMessageCallback = Callable[[CompletionMessage], Awaitable[None]]
 
 _logger = logging.getLogger('pysignalr.client')
@@ -333,14 +333,14 @@ class SignalRClient:
                 await self._transport.send(
                     CompletionMessage(invocation_id=invocation_id, error="Client didn't provide a result.")
                 )
-            return None
+            return
 
         if invocation_id is not None and len(callbacks) > 1:
             _logger.error("Multiple results provided for '%s'. Sending error to server.", message.target)
             await self._transport.send(
                 CompletionMessage(invocation_id=invocation_id, error='Client provided multiple results.')
             )
-            return None
+            return
 
         for callback in callbacks:
             try:
@@ -367,10 +367,10 @@ class SignalRClient:
             except Exception as exc:
                 _logger.error("A callback for the method '%s' threw error '%s'.", message.target, exc)
                 if invocation_id is None:
-                    raise exc
+                    raise
                 await self._transport.send(CompletionMessage(invocation_id=invocation_id, error=str(exc)))
 
-        return None
+        return
 
     async def _on_completion_message(self, message: CompletionMessage) -> None:
         """

@@ -41,6 +41,4 @@ class UtilsTest(TestCase):
         Tests the get_connection_url function to ensure it correctly constructs connection URLs with IDs.
         """
         url = 'http://localhost:8080/v1/events?foo=bar'
-        self.assertEqual(
-            'ws://localhost:8080/v1/events?foo=bar&id=123', get_connection_url(url, '123')
-        )
+        self.assertEqual('ws://localhost:8080/v1/events?foo=bar&id=123', get_connection_url(url, '123'))
